@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "defaultMode": "plan",
+    "allow": [
+      "WebFetch(domain:docs.mistral.ai)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:robotframework.org)",
+      "WebFetch(domain:docs.python.org)"
+    ],
+    "ask": [
+      "WebSearch"
+    ]
+  }
+}

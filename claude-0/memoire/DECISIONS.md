@@ -1,0 +1,49 @@
+# Décisions
+
+Format : identifiant, date, décision, justification, source. Statut « Proposée » = à confirmer à l'étape indiquée.
+
+## D-01 — Organisation de l'outillage (2026-10-07, validée)
+`claude-0/` contient `CLAUDE.md`, `.claude/`, `memoire/`, `reference/` ; il est déplacé à la racine d'un espace de travail avant l'étape 1. `projet-mistral-vibe/` est créé par `/etape-1` à cette racine.
+Justification : Claude Code ne lit `.claude/` et `CLAUDE.md` qu'à la racine de la session.
+
+## D-02 — Une session par étape, état dans `memoire/` (2026-10-07, validée)
+Chaque étape démarre dans un contexte neuf ; `CLAUDE.md` importe `memoire/ETAT.md` ; chaque étape met à jour les trois fichiers de mémoire en clôture.
+
+## D-03 — Mode plan par défaut (2026-10-07, validée)
+Claude Code : `permissions.defaultMode = "plan"`. Vibe : `default_agent = "plan"` et validation par `ask_user_question` dans le prompt de l'orchestrateur.
+Justification : exigence « toute nouvelle demande passe par un plan à valider ». Le modèle Vibe ne peut pas entrer seul dans l'agent `plan` (guide, 5.3) : l'orchestrateur impose donc aussi la validation.
+
+## D-04 — Quatre agents Claude Code, orchestration dans la session principale (2026-10-07, validée)
+`vibe-harness-expert`, `python-expert`, `robot-framework-expert`, `harness-verifier` (lecture seule). Les agents ne délèguent pas entre eux.
+
+## D-05 — Critère de validation d'une refacto (2026-10-07, validée)
+`robot --test "<nom>"` exécuté et vert. Exécution de référence avant refacto.
+
+## D-06 — Environnement d'exécution (2026-10-07, validée)
+Vibe et `robot` sous WSL/Linux ; hooks en `python3`, stdlib Python 3.11 ; chemins relatifs (harnais importé plus tard dans le dépôt de tests RF).
+
+## D-07 — Modèles Mistral par agent Vibe (2026-10-07, proposée, à confirmer en étape 1)
+
+Modèles actifs au 2026-10-07 :
+
+| Modèle | ID | Contexte | Profil | $/M entrée / sortie |
+| --- | --- | --- | --- | --- |
+| Mistral Medium 3.5 | `mistral-medium-latest` | 256k | Recommandé par la doc Vibe, agentique et code | 1,5 / 7,5 |
+| Mistral Small 4 | `mistral-small-latest` | 256k | Instruct + raisonnement + code, rapide | 0,15 / 0,6 |
+| Mistral Large 3 | `mistral-large-latest` | n.c. | Tâches complexes, non orienté agent | 0,5 / 1,5 |
+| Codestral | `codestral-latest` | n.c. | Complétion de code (FIM), non agentique | 0,3 / 0,9 |
+
+Écartés : Devstral 2, Devstral Small 2, Magistral (retirés, remplacés par Medium 3.5 / Small 4) ; Large 4 (absent de la liste Vibe) ; GLM (tiers).
+
+| Agent Vibe | Modèle | `thinking` | Raison |
+| --- | --- | --- | --- |
+| `plan` (intégré), `orchestrator` | Medium 3.5 | haut | Analyse, plan, décisions d'arrêt |
+| `rf-refactorer` | Medium 3.5 | moyen | Qualité du code ; plan validé en amont |
+| `reviewer`, `rf-reviewer` | Medium 3.5 | moyen | Un relecteur plus faible que l'auteur rate des erreurs |
+| `historien` | Small 4 | off | Mise en forme d'un résumé fourni, coût divisé par 10 |
+| `compaction_model` | Small 4 | off | Résumés de contexte |
+
+Mise en œuvre : presets `[[models]]` (alias `medium-think`, `medium`, `small`) dans `.vibe/config.toml`, référencés par `active_model` dans chaque agent.
+Conséquence : une skill tourne avec le modèle de l'agent courant ; l'historisation passe donc par un sous-agent `historien`.
+Repli : si un sous-agent n'applique pas son propre `active_model`, tout en Medium 3.5 et la skill d'historisation écrit directement.
+Sources : https://docs.mistral.ai/getting-started/models/models_overview/ · https://docs.mistral.ai/inference/pricing · https://docs.mistral.ai/vibe/code/cli/configuration-reference · https://docs.mistral.ai/vibe/code/cli/agents
