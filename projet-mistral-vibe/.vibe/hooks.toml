@@ -1,0 +1,10 @@
+# Hooks Vibe 2.25.8 du harnais.
+# Commande lancée par un shell dans le répertoire courant de la session : lancer vibe depuis la racine du dépôt. JSON de l'événement sur stdin.
+# Stdout vide + exit 0 = laisser passer.
+
+[[hooks]]
+name = "audit-bash"
+type = "post_tool"
+match = "bash"
+command = "python3 .vibe/hooks/audit_bash.py"
+description = "Trace chaque commande shell dans .vibe/logs/bash.log."

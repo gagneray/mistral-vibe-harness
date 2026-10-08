@@ -1,0 +1,10 @@
+# Sous-agent de relecture, appelé par l'orchestrateur via task(agent="reviewer").
+# En 2.25.8, un sous-agent ignore active_model (il tourne sur le modèle de la session)
+# et perd l'allowlist / denylist de ses [tools.*] : aucune de ces clés ici.
+# La lecture seule tient à enabled_tools (ni edit ni write_file).
+agent_type = "subagent"
+display_name = "Relecteur"
+description = "Relit les changements en cours (git diff, fichiers modifiés) en lecture seule et rend Bloquant / À corriger / Suggestion avec fichier:ligne. À appeler avant de conclure toute tâche qui modifie des fichiers."
+safety = "safe"
+system_prompt_id = "reviewer"
+enabled_tools = ["read_file", "grep", "bash"]

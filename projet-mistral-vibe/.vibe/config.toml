@@ -1,0 +1,33 @@
+# Configuration projet Mistral Vibe 2.25.8 (prise en compte une fois le dossier approuvé).
+# Clés de premier niveau d'abord : toute clé placée après une table lui appartiendrait.
+
+# Agent au lancement interactif : l'agent intégré "plan" (lecture seule, plan à valider).
+default_agent = "plan"
+
+# Alias intégré : mistral-vibe-cli-latest (Medium 3.5), thinking = "high".
+active_model = "mistral-medium-3.5"
+
+# Pas d'enabled_skills : une liste blanche masquerait aussi les skills fournies par Vibe.
+# Pas de sensitive_patterns : la définir remplacerait les motifs .env* protégés par défaut.
+
+# Modèle de compaction du contexte : Small 4, sans réflexion, même provider que le modèle actif.
+[compaction_model]
+name = "mistral-small-latest"
+provider = "mistral"
+alias = "small-compact"
+temperature = 0.2
+thinking = "off"
+
+# Shell : préfixes refusés sans demande.
+# Définir une liste remplace celle par défaut (fusion superficielle, vibe/core/tools/manager.py) :
+# la denylist reprend donc les défauts POSIX de bash.py ; pas d'allowlist (git status/diff/log y sont déjà).
+# Comparaison par préfixe : protection partielle (ex. "git push origin x --force" passe).
+[tools.bash]
+denylist = ["gdb", "pdb", "passwd", "nano", "vim", "vi", "emacs", "bash -i", "sh -i", "zsh -i", "fish -i", "dash -i", "screen", "tmux", "git push --force", "git push -f", "rm -rf", "rm -fr"]
+
+# Le harnais lui-même (.vibe/) est protégé en écriture pour les agents.
+[tools.edit]
+denylist = ["*/.vibe/*"]
+
+[tools.write_file]
+denylist = ["*/.vibe/*"]

@@ -22,7 +22,7 @@ Justification : exigence « toute nouvelle demande passe par un plan à valider 
 ## D-06 — Environnement d'exécution (2026-10-07, validée)
 Vibe et `robot` sous WSL/Linux ; hooks en `python3`, stdlib Python 3.11 ; chemins relatifs (harnais importé plus tard dans le dépôt de tests RF).
 
-## D-07 — Modèles Mistral par agent Vibe (2026-10-07, proposée, à confirmer en étape 1)
+## D-07 — Modèles Mistral par agent Vibe (2026-10-07, proposée, révisée par D-07b)
 
 Modèles actifs au 2026-10-07 :
 
@@ -47,3 +47,39 @@ Mise en œuvre : presets `[[models]]` (alias `medium-think`, `medium`, `small`) 
 Conséquence : une skill tourne avec le modèle de l'agent courant ; l'historisation passe donc par un sous-agent `historien`.
 Repli : si un sous-agent n'applique pas son propre `active_model`, tout en Medium 3.5 et la skill d'historisation écrit directement.
 Sources : https://docs.mistral.ai/getting-started/models/models_overview/ · https://docs.mistral.ai/inference/pricing · https://docs.mistral.ai/vibe/code/cli/configuration-reference · https://docs.mistral.ai/vibe/code/cli/agents
+
+## D-07b — Grille modèle / agent révisée (2026-10-07, validée, étape 1)
+| Agent | Modèle | `thinking` | Mécanisme |
+| --- | --- | --- | --- |
+| `plan`, session par défaut | Medium 3.5 (alias intégré `mistral-medium-3.5` = `mistral-vibe-cli-latest`) | high | `active_model` global |
+| `orchestrator` | Medium 3.5 | high | `active_model` dans le fichier d'agent |
+| Tout sous-agent (`reviewer`, futurs `rf-*`, `historien`) | Modèle de la session | high | Aucune clé : ignorée en 2.25.8 |
+| compaction | Small 4 (`mistral-small-latest`) | off | Table `[compaction_model]`, provider `mistral` |
+
+Justification :
+- un sous-agent ignore `active_model` sous le Unified Harness (`vibe/app_server/_agent_types.py`) ;
+- `active_model` doit être un alias existant ;
+- vers l'API Mistral, `medium`, `high` et `max` donnent tous `reasoning_effort = "high"` (`vibe/core/llm/backend/mistral.py`) : pas de niveau intermédiaire réel ;
+- aucun `[[models]]` ajouté : l'alias intégré suffit.
+
+Conséquence : repli D-07 appliqué. Pour l'étape 3, la skill d'historisation écrit directement, sans sous-agent `historien` sur Small 4.
+Sources : https://raw.githubusercontent.com/mistralai/mistral-vibe/v2.25.8/vibe/core/config/vibe_schema.py · …/v2.25.8/vibe/config_values.py · …/v2.25.8/vibe/core/llm/backend/mistral.py · …/v2.25.8/vibe/app_server/_agent_types.py · https://docs.mistral.ai/models/mistral-medium-3-5-26-04 · https://docs.mistral.ai/models/mistral-small-4-0-26-03
+
+## D-08 — Permissions du harnais générique (2026-10-07, validée, étape 1)
+- `[tools.bash]` : pas d'`allowlist` (les défauts couvrent `git status/diff/log`, `ls`, `cat`…). La `denylist` reprend les 14 défauts POSIX de `bash.py`, plus `git push --force`, `git push -f`, `rm -rf` et `rm -fr`.
+- `[tools.edit]` et `[tools.write_file]` : `denylist = ["*/.vibe/*"]`.
+- Pas de `sensitive_patterns`.
+- `reviewer` : lecture seule par `enabled_tools = ["read_file", "grep", "bash"]`, sans `[tools.*]`.
+- `orchestrator` : `[tools.task] allowlist = ["explore", "reviewer"]`.
+
+Justification :
+- définir une liste d'outil remplace la liste par défaut (fusion superficielle, `vibe/core/tools/manager.py`) : il faut donc reprendre les défauts, et un `sensitive_patterns` remplacerait les motifs `.env*` ;
+- un sous-agent perd les `allowlist` / `denylist` de ses `[tools.*]` (`vibe/app_server/_runtime.py`).
+
+Limite : la comparaison se fait par préfixe, la protection est donc partielle (`git push origin x --force` passe).
+
+## D-09 — Structure et prompts (2026-10-07, validée, étape 1)
+- Prompts = copie exacte (vérifiée par `diff`) de `vibe/core/prompts/cli.md` au tag v2.25.8, suivie d'une section « Ajouts du harnais ». Une copie via WebFetch n'est pas fiable (texte reformulé) : toujours copier depuis le fichier brut avec `curl`.
+- Règles transverses dans `AGENTS.md`, méthode d'orchestration et format de relecture dans les prompts, sans doublon.
+- Hook d'audit : chemin du log calculé depuis `__file__`, stdin lu en octets UTF-8, toujours `exit 0`. La commande `python3 .vibe/hooks/audit_bash.py` suppose que `vibe` est lancé à la racine.
+- Flux : agent `plan`, puis `exit_plan_mode`, répondre « No », puis `Shift+Tab` vers `orchestrator`. Les choix « Yes … auto approve » basculent vers `accept-edits` sans orchestrateur.

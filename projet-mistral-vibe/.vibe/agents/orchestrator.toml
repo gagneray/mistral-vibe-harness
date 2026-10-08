@@ -1,0 +1,12 @@
+# Agent principal : planifie, fait valider, exécute pas à pas et délègue la relecture.
+# Lancement : vibe --agent orchestrator
+agent_type = "agent"
+display_name = "Orchestrateur"
+description = "Planifie, fait valider le plan, exécute une étape à la fois, délègue la relecture à reviewer puis vérifie."
+safety = "neutral"
+system_prompt_id = "orchestrator"
+active_model = "mistral-medium-3.5"
+
+# Sous-agents délégables par task (défaut 2.25.8 : ["explore"] seul).
+[tools.task]
+allowlist = ["explore", "reviewer"]
