@@ -1,6 +1,8 @@
-"""Hook post_tool Vibe : trace chaque commande bash dans .vibe/logs/bash.log.
+"""Hook post_tool Vibe 2.26.0 : trace chaque commande shell dans .vibe/logs/bash.log.
 
 Une ligne par appel : horodatage, outil, statut, commande (séparés par des tabulations).
+Champs lus sur stdin : tool_name (« file_system.bash » depuis 2.26.0, « bash » avant),
+tool_status (success/failure), tool_input.command. Les autres champs sont ignorés.
 N'écrit rien sur stdout et sort toujours en code 0 : le hook ne bloque jamais.
 """
 

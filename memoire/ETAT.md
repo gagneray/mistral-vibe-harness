@@ -1,41 +1,39 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-10-08 (recette étape 1 en cours).
+Dernière mise à jour : 2026-10-09 (recette WSL arrêtée par l'utilisateur, prompts traduits, correctifs D-11).
 
 | Étape | Commande | Statut | Livrables |
 | --- | --- | --- | --- |
 | 0. Outillage Claude Code | — | Terminée | `CLAUDE.md`, `.claude/`, `memoire/`, `reference/` |
-| 1. Squelette générique | `/etape-1` | Construite ; recette WSL en cours (points 1-5 faits, écarts relevés) | `projet-mistral-vibe/` (AGENTS.md, README.md, .gitignore, .vibe/, tests_harnais/) |
+| 1. Squelette générique | `/etape-1` | Recette WSL 2026-10-09 jugée suffisante (points 0-8) ; correctifs D-11 appliqués | `projet-mistral-vibe/` (AGENTS.md, README.md, .gitignore, .vibe/, tests_harnais/), `Test_Etape_1/` |
 | 2. Refacto Robot Framework | `/etape-2` | À faire | skill `refacto-test`, sous-agents RF, hook de validation |
 | 3. Historisation | `/etape-3` | À faire | skill `historiser-refacto`, `historisation_refacto/` |
 
-## Livrables de l'étape 1
-- `AGENTS.md` : lignes directrices, plan validé avant toute écriture, méthode de raisonnement, preuve par exécution.
-- `.vibe/config.toml` : `default_agent = "plan"`, `active_model = "mistral-medium-3.5"`, `[compaction_model]` Small 4, denylist bash (défauts + ajouts), `.vibe/` protégé en écriture.
-- `.vibe/agents/orchestrator.toml`, `reviewer.toml` ; `.vibe/prompts/` = `cli.md` v2.25.8 (copie exacte) + « Ajouts du harnais ».
-- `.vibe/hooks.toml` + `hooks/audit_bash.py` ; `tests_harnais/test_audit_bash.py` : 6 tests verts (Python 3.13 Windows).
-- `README.md` : installation, import, flux, recette en 11 points.
-- Vérification `harness-verifier` : 5 non-conformités corrigées puis revérifiées.
+## Livrables de l'étape 1 (référence Vibe 2.26.0, D-10)
+- `AGENTS.md` : lignes directrices, plan validé avant toute écriture, agent `plan` sans écriture, fichiers modifiés uniquement par l'outil d'édition (jamais par le shell), refus définitif, outil de vérification manquant signalé, méthode de raisonnement, preuve par exécution.
+- `.vibe/config.toml` : `default_agent = "plan"`, `active_model = "mistral-medium-3.5"`, `[compaction_model]` Small 4, denylist bash (défauts + ajouts), fichiers du harnais protégés en écriture (le plan de l'agent `plan` va dans le scratchpad de session).
+- `.vibe/agents/orchestrator.toml`, `reviewer.toml` (`enabled_tools = ["read_file", "bash"]`) ; `.vibe/prompts/` = traduction française de `cli.md` v2.26.0 (D-11) + « Ajouts du harnais » (relecture unique par `spawn`/`wait`, points jugés, corrections non bloquantes après accord).
+- `.vibe/hooks.toml` + `hooks/audit_bash.py` ; `tests_harnais/test_audit_bash.py` reconstitué (fichier jamais committé) : 7 tests verts (Python 3.13 Windows).
+- `Test_Etape_1/` : `projet_exemple/tests/` recréé (4 tests + `conftest.py`) ; `preparer.sh` → 11 tests verts.
+- `README.md` et `Test_Etape_1/README.md` : venv avec pytest activé avant `vibe`, recette 2.26.0 (points 1-11, 7a bis, 7e, bonus).
 
 ## Prochaine action
-1. Nouvelle session avec `PROMPT_REPRISE_ETAPE_1.md` (racine) : trancher la version (2.25.8 ou 2.26.0), finir la recette (points 6 à 11), corriger le harnais.
-2. Puis lancer `/etape-2` dans une session neuve.
+1. Commit de l'étape 1 (avec accord ; inclure `tests_harnais/` et `Test_Etape_1/projet_exemple/tests/`, non suivis).
+2. Facultatif : rejouer le point 4 pour vérifier les correctifs D-11 (relecture unique, pas de modification par le shell).
+3. Variante GLM (demande utilisateur du 2026-10-08, après la recette Medium 3.5) : décision D-12 à prendre (GLM écarté en D-07) ; obtenir le nom exact du modèle et du provider et l'accord pour consulter leur doc ; `vibe-harness-expert` vérifie `[[providers]]` / `[[models]]` en 2.26.0 ; modifier `active_model` de `config.toml` et d'`orchestrator.toml`, revoir `[compaction_model]` (ignoré si autre provider) ; recette ciblée points 3, 4, 7d.
+4. Puis `/etape-2` dans une session neuve.
 
-## Recette du 2026-10-08 (Vibe 2.26.0 installé, référence 2.25.8)
+## Recette du 2026-10-08 (Vibe 2.26.0, harnais avant correctifs)
 - OK : confiance, règles d'`AGENTS.md`, `/thinking` = high, `todo`, écriture par l'outil d'édition avec approbation dans `orchestrator`.
-- Écarts : pas d'`exit_plan_mode` (question en texte libre) ; l'agent `plan` contourne ses refus d'écriture par bash ; pas de `task(reviewer)` ; vérification factice quand pytest manque.
-- Détail et correctifs envisagés : `PROMPT_REPRISE_ETAPE_1.md`, `VIBE_FAITS_VERIFIES.md` (section « Recette 2026-10-08 »).
-
-## Recettes manuelles en attente
-- Étape 1 : `projet-mistral-vibe/README.md`, section « Recette » (11 points).
+- Écarts expliqués par D-10 : pas d'`exit_plan_mode` ni de `task` sous le Unified Harness ; contournement par bash dans `plan` (bash en `ask`) ; vérification factice (pytest absent, tests du banc manquants).
 
 ## Questions ouvertes
-- **Version de référence** : 2.25.8 (CLAUDE.md) ou 2.26.0 (installée par l'utilisateur) ? Bloquant pour la suite de la recette.
-- Nom de l'outil shell vu par les hooks sous le nouveau moteur (`bash` ou `file_system.bash`) : recette 1, point 8.
-- Hook introuvable si `vibe` est lancé depuis un sous-dossier : recette 1, point 9 ; si gênant, passer par `git rev-parse --show-toplevel` (shell disponible depuis 2.25.5).
-- Outils réellement disponibles pour `reviewer` (`grep`) sous le nouveau moteur : recette 1, point 6.
-- Prompt système du nouveau moteur = `cli.md` ? recette 1, point 6.
-- Contenu réel du stdin des hooks (`session_id`, `transcript_path`) : recette 1, utile à l'étape 3.
-- Effet réel d'`allowed-tools` dans une skill (restriction ou pré-approbation) : étape 2.
+- Outils web exposés par Vibe (`web_search`, `news_search`, `finance_search`, `weather_search`, `open_url`…) : les désactiver pour les agents du harnais ?
+- Le modèle oublie `spawn` sans demande explicite : à revérifier après D-11.
+- Champs stdin réels des hooks (`session_id`, `transcript_path` dossier, `duration_ms`) : utile à l'étape 3 (point 8).
+- Hook depuis un sous-dossier : `workspace.cwd` = dossier de lancement ? si gênant, `git rev-parse --show-toplevel` (point 9).
+- Prompt de l'agent `plan` : `cli` ou variante `cli_2026-*` (GrowthBook) (point 6).
+- Bash dans le sous-agent `reviewer` (bonus).
+- Effet réel d'`allowed-tools` dans une skill (étape 2).
 - Bibliothèques RF du dépôt cible et existence d'une suite d'exemple (étape 2).
 - Nombre maximal d'itérations de refacto (étape 2).

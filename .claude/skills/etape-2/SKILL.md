@@ -36,7 +36,7 @@ A1. Questions à l'utilisateur (une seule série, AskUserQuestion) :
 - nombre maximal d'itérations (proposition : 3) ;
 - critère de validation : `robot --test` vert (décision D-05), à confirmer avec ou sans `--dryrun` préalable.
 
-A2. Vérifier les faits utiles → `vibe-harness-expert` : arguments passés à une skill (`/refacto-test ...`), skill qui délègue via `task`, `allowed-tools`, hook `post_agent` (champs stdin, 3 relances max), hooks hérités par les sous-agents, `active_model` par sous-agent (résultat de la recette étape 1).
+A2. Vérifier les faits utiles → `vibe-harness-expert` : arguments passés à une skill (`/refacto-test ...`), skill qui délègue à un sous-agent (`spawn`/`wait` sous le Unified Harness), `allowed-tools`, hook `post_agent` (champs stdin, 3 relances max), hooks hérités par les sous-agents, `active_model` par sous-agent (résultat de la recette étape 1).
 → vérif : statuts et URL, à reporter dans `VIBE_FAITS_VERIFIES.md`.
 
 A3. Trancher le mécanisme de validation (présenter les deux options, recommander une) :

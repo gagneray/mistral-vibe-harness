@@ -20,7 +20,7 @@ L'expérimentation doit dire si la refacto assistée par Vibe vaut la peine. Cha
 
 ## Conception attendue
 - Skill Vibe `historiser-refacto` (`.vibe/skills/historiser-refacto/`), appelable en `/historiser-refacto` et appelée en dernière étape de `/refacto-test`.
-- Sous-agent `historien` (modèle léger, décision D-07) : la skill lui délègue l'écriture via `task`. Il ne voit pas la conversation : l'orchestrateur lui transmet un résumé structuré suivant le modèle. Si la recette de l'étape 1 a montré qu'un sous-agent ne peut pas avoir son propre modèle, la skill écrit directement (repli D-07).
+- Sous-agent `historien` (modèle léger, décision D-07) : la skill lui délègue l'écriture via `spawn`/`wait`. Il ne voit pas la conversation : l'orchestrateur lui transmet un résumé structuré suivant le modèle. Si la recette de l'étape 1 a montré qu'un sous-agent ne peut pas avoir son propre modèle, la skill écrit directement (repli D-07).
 - Un fichier par demande : `historisation_refacto/NNNN_AAAA-MM-JJ_<test-slug>.md`, `NNNN` séquentiel.
 - Numérotation et création par un script Python déterministe (`nouvelle_entree.py` dans le dossier de la skill) : calcule le numéro suivant, crée le fichier depuis le modèle, ajoute la ligne à l'INDEX, affiche le chemin créé.
 - `historisation_refacto/INDEX.md` : tableau, une ligne par entrée (n°, date, test, résultat, lien).
@@ -36,7 +36,7 @@ L'expérimentation doit dire si la refacto assistée par Vibe vaut la peine. Cha
 
 ## Phase A — Plan (mode plan, rien n'est écrit)
 
-A1. Vérifier → `vibe-harness-expert` : skill qui exécute un script de son dossier (chemin, permission `bash`), skill qui délègue via `task`, ordre des hooks `post_agent` si deux hooks coexistent, `enabled_skills` à compléter.
+A1. Vérifier → `vibe-harness-expert` : skill qui exécute un script de son dossier (chemin, permission `bash`), skill qui délègue à un sous-agent (`spawn`/`wait`), ordre des hooks `post_agent` si deux hooks coexistent, `enabled_skills` à compléter.
 → vérif : statuts et URL.
 
 A2. Soumettre le plan (ExitPlanMode) : conception ci-dessus, choix sur le hook optionnel, modèle d'entrée complet, exemple d'entrée remplie.

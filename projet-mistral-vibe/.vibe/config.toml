@@ -1,4 +1,4 @@
-# Configuration projet Mistral Vibe 2.25.8 (prise en compte une fois le dossier approuvé).
+# Configuration projet Mistral Vibe 2.26.0 (prise en compte une fois le dossier approuvé).
 # Clés de premier niveau d'abord : toute clé placée après une table lui appartiendrait.
 
 # Agent au lancement interactif : l'agent intégré "plan" (lecture seule, plan à valider).
@@ -18,6 +18,10 @@ alias = "small-compact"
 temperature = 0.2
 thinking = "off"
 
+# Clés historiques [tools.bash] / [tools.edit] / [tools.write_file] : en 2.26.0 (Unified Harness),
+# elles s'appliquent à file_system.bash et process.*, file_system.search_replace, file_system.write_file
+# (vibe/app_server/_unified_permissions.py).
+#
 # Shell : préfixes refusés sans demande.
 # Définir une liste remplace celle par défaut (fusion superficielle, vibe/core/tools/manager.py) :
 # la denylist reprend donc les défauts POSIX de bash.py ; pas d'allowlist (git status/diff/log y sont déjà).
@@ -25,9 +29,10 @@ thinking = "off"
 [tools.bash]
 denylist = ["gdb", "pdb", "passwd", "nano", "vim", "vi", "emacs", "bash -i", "sh -i", "zsh -i", "fish -i", "dash -i", "screen", "tmux", "git push --force", "git push -f", "rm -rf", "rm -fr"]
 
-# Le harnais lui-même (.vibe/) est protégé en écriture pour les agents.
+# Le harnais (.vibe/) est protégé en écriture pour les agents, élément par élément :
+# un motif global "*/.vibe/*" couvrirait aussi ~/.vibe/plans/ et empêcherait l'agent plan d'écrire son plan.
 [tools.edit]
-denylist = ["*/.vibe/*"]
+denylist = ["*/.vibe/agents/*", "*/.vibe/prompts/*", "*/.vibe/hooks/*", "*/.vibe/skills/*", "*/.vibe/logs/*", "*/.vibe/config.toml", "*/.vibe/hooks.toml"]
 
 [tools.write_file]
-denylist = ["*/.vibe/*"]
+denylist = ["*/.vibe/agents/*", "*/.vibe/prompts/*", "*/.vibe/hooks/*", "*/.vibe/skills/*", "*/.vibe/logs/*", "*/.vibe/config.toml", "*/.vibe/hooks.toml"]

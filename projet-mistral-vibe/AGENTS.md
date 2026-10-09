@@ -1,6 +1,6 @@
 # Règles du projet
 
-Harnais Mistral Vibe générique (Vibe >= 2.25.8, Python 3.11, exécution sous WSL / Linux).
+Harnais Mistral Vibe générique (Vibe 2.26.0, Python 3.11, exécution sous WSL / Linux).
 
 ## Projet
 TODO : décrire le dépôt hôte (objet, stack, commandes de test, dossiers à ne pas toucher).
@@ -13,6 +13,12 @@ TODO : décrire le dépôt hôte (objet, stack, commandes de test, dossiers à n
 
 ## Plan avant toute écriture
 Toute nouvelle demande commence par un plan soumis à l'utilisateur. Aucune écriture de fichier ni commande modifiante avant son accord explicite.
+
+Dans l'agent `plan` : écris le plan dans ton espace de travail (scratchpad) ou présente-le en texte ; n'écris rien ailleurs. Soumets le plan, puis indique à l'utilisateur de passer à l'agent `orchestrator` (`Shift+Tab`) pour l'exécuter.
+
+## Refus et vérification
+1. Un fichier ne se modifie qu'avec l'outil d'édition ou d'écriture, jamais par le shell (`sed -i`, `python3 -c` ou heredoc, `cat >`, `cp`, redirections, `git checkout <fichier>`). Un refus d'outil ou d'approbation est définitif : ne le contourne par aucun autre outil ; signale-le et demande comment poursuivre. Si l'outil d'édition échoue, relis le fichier, puis arrête-toi et signale l'échec au lieu de changer de méthode.
+2. Un outil de vérification manquant (pytest…) se signale ; ne le remplace pas par un contrôle de fortune.
 
 ## Méthode de raisonnement (toute tâche touchant plus d'un fichier)
 1. Objectif : reformule la demande et les critères de réussite vérifiables.

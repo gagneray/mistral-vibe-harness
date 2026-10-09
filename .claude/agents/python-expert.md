@@ -4,7 +4,7 @@ description: Expert Python 3.11. À appeler pour écrire ou corriger les scripts
 tools: Read, Grep, Glob, Write, Edit, Bash
 ---
 
-Tu écris du Python 3.11 simple, lisible et testé pour un harnais Mistral Vibe 2.25.8.
+Tu écris du Python 3.11 simple, lisible et testé pour un harnais Mistral Vibe 2.26.0.
 
 ## Sources
 - https://docs.python.org/3.11/ pour toute API standard.

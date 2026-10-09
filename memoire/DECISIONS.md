@@ -65,7 +65,7 @@ Justification :
 Conséquence : repli D-07 appliqué. Pour l'étape 3, la skill d'historisation écrit directement, sans sous-agent `historien` sur Small 4.
 Sources : https://raw.githubusercontent.com/mistralai/mistral-vibe/v2.25.8/vibe/core/config/vibe_schema.py · …/v2.25.8/vibe/config_values.py · …/v2.25.8/vibe/core/llm/backend/mistral.py · …/v2.25.8/vibe/app_server/_agent_types.py · https://docs.mistral.ai/models/mistral-medium-3-5-26-04 · https://docs.mistral.ai/models/mistral-small-4-0-26-03
 
-## D-08 — Permissions du harnais générique (2026-10-07, validée, étape 1)
+## D-08 — Permissions du harnais générique (2026-10-07, validée, étape 1 ; révisée par D-10)
 - `[tools.bash]` : pas d'`allowlist` (les défauts couvrent `git status/diff/log`, `ls`, `cat`…). La `denylist` reprend les 14 défauts POSIX de `bash.py`, plus `git push --force`, `git push -f`, `rm -rf` et `rm -fr`.
 - `[tools.edit]` et `[tools.write_file]` : `denylist = ["*/.vibe/*"]`.
 - Pas de `sensitive_patterns`.
@@ -78,8 +78,35 @@ Justification :
 
 Limite : la comparaison se fait par préfixe, la protection est donc partielle (`git push origin x --force` passe).
 
-## D-09 — Structure et prompts (2026-10-07, validée, étape 1)
+## D-09 — Structure et prompts (2026-10-07, validée, étape 1 ; flux révisé par D-10, copie remplacée par une traduction en D-11)
 - Prompts = copie exacte (vérifiée par `diff`) de `vibe/core/prompts/cli.md` au tag v2.25.8, suivie d'une section « Ajouts du harnais ». Une copie via WebFetch n'est pas fiable (texte reformulé) : toujours copier depuis le fichier brut avec `curl`.
 - Règles transverses dans `AGENTS.md`, méthode d'orchestration et format de relecture dans les prompts, sans doublon.
 - Hook d'audit : chemin du log calculé depuis `__file__`, stdin lu en octets UTF-8, toujours `exit 0`. La commande `python3 .vibe/hooks/audit_bash.py` suppose que `vibe` est lancé à la racine.
 - Flux : agent `plan`, puis `exit_plan_mode`, répondre « No », puis `Shift+Tab` vers `orchestrator`. Les choix « Yes … auto approve » basculent vers `accept-edits` sans orchestrateur.
+
+## D-10 — Référence Vibe 2.26.0, Unified Harness (2026-10-08, validée)
+Décision : la version de référence passe de 2.25.8 à 2.26.0, version installée sous WSL. Le moteur visé est le Unified Harness ; `--legacy-harness` reste un repli documenté, non retenu.
+
+Conséquences sur le harnais :
+- `[tools.edit]` / `[tools.write_file]` : la denylist `*/.vibe/*` est remplacée par les sous-dossiers et fichiers du harnais (`*/.vibe/agents/*`, `prompts`, `hooks`, `skills`, `logs`, `config.toml`, `hooks.toml`). L'ancien motif couvrait `~/.vibe/plans/` et empêchait l'agent `plan` d'écrire son plan.
+- `[tools.bash]` inchangé : clés historiques appliquées à `file_system.bash` ; défauts POSIX identiques à 2.25.8.
+- `[tools.task]` supprimé (sans effet). La relecture passe par l'outil natif `spawn` (`agentType = "reviewer"`) puis `wait`.
+- `reviewer` : `enabled_tools = ["read_file", "bash"]` (`grep` n'est pas un outil natif) ; recherche via `grep`/`find` en bash.
+- Flux (remplace celui de D-09) : agent `plan` → plan en texte → `Shift+Tab` vers `orchestrator` → `ask_user_question` → exécution → `spawn`/`wait` de `reviewer`. `exit_plan_mode` n'est pas proposé au modèle.
+- `default_agent = "plan"` conservé (lecture seule matérielle de l'édition).
+- `AGENTS.md` : un refus est définitif (pas de contournement par le shell) ; un outil de vérification manquant est signalé, jamais remplacé.
+- `python3 -m pytest` reste soumis à approbation (pas d'allowlist bash, choix utilisateur : simplicité).
+- Prompts : `cli.md` v2.26.0 identique octet par octet à v2.25.8 (diff du 2026-10-08) : copie conservée (remplacée par une traduction en D-11).
+
+Justification : recette du 2026-10-08 jouée sur 2.26.0 ; trois écarts (`exit_plan_mode`, `task`, `grep`) viennent du Unified Harness, déjà par défaut en 2.25.8 : les fiches 2.25.8 correspondantes ne valaient que pour l'ancien moteur.
+Sources : https://raw.githubusercontent.com/mistralai/mistral-vibe/v2.26.0/CHANGELOG.md · …/v2.26.0/vibe/app_server/_unified_permissions.py · …/v2.26.0/vibe/app_server/_runtime.py · …/v2.26.0/vibe/app_server/_agent_types.py · …/v2.26.0/vibe/core/agents/models.py · …/v2.26.0/vibe/core/tools/utils.py · …/v2.26.0/harness/core/src/core/features/subagents/tools.rs
+
+## D-11 — Prompts en français et correctifs de recette (2026-10-09, validée)
+- La partie de base des prompts `orchestrator.md` et `reviewer.md` devient une traduction française fidèle de `cli.md` v2.26.0 (au lieu de la copie exacte de D-09). Coût : à reprendre à la main si Vibe modifie `cli.md`.
+- L'agent `plan` garde le prompt intégré de Vibe (anglais) : pas de `.vibe/prompts/cli.md` projet (simplicité ; une expérimentation GrowthBook peut lui imposer une variante `cli_2026-*`).
+- Correctifs issus de la recette du 2026-10-09 :
+  - orchestrateur : une seule relecture par tâche ; chaque point jugé ; « À corriger » / « Suggestion » appliqués seulement après `ask_user_question` ; au plus une nouvelle relecture, après correction d'un Bloquant ;
+  - relecteur : constat vérifié dans le fichier (ligne exacte), rien de contraire aux conventions du langage ;
+  - `AGENTS.md` : un fichier ne se modifie que par l'outil d'édition ou d'écriture, jamais par le shell ; si l'outil échoue, s'arrêter et signaler.
+- Pas de changement de permissions : les modifications par `sed -i` étaient soumises à approbation (7d confirmé).
+Justification : recette du 2026-10-09 (`VIBE_FAITS_VERIFIES.md`, section « Recette 2026-10-09 ») ; demande utilisateur (instructions en français).

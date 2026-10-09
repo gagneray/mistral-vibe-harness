@@ -1,6 +1,7 @@
-# Hooks Vibe 2.25.8 du harnais.
-# Commande lancée par un shell dans le répertoire courant de la session : lancer vibe depuis la racine du dépôt. JSON de l'événement sur stdin.
-# Stdout vide + exit 0 = laisser passer.
+# Hooks Vibe 2.26.0 du harnais.
+# Commande lancée par un shell dans workspace.cwd (répertoire de lancement) : lancer vibe depuis la racine du dépôt.
+# JSON de l'événement sur stdin ; stdout vide + exit 0 = laisser passer.
+# match est comparé au nom natif file_system.bash et à son alias bash ; le hook reçoit tool_name = "file_system.bash".
 
 [[hooks]]
 name = "audit-bash"

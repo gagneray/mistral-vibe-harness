@@ -1,3 +1,5 @@
+> **Historique (référence 2.25.8, 2026-10-07).** Depuis le 2026-10-08, la référence est Vibe 2.26.0 (D-10) : pas d'`exit_plan_mode`, relecture par `spawn`/`wait` au lieu de `task`, installation `==2.26.0` ; prompts traduits en français (D-11). Voir `memoire/DECISIONS.md` et `projet-mistral-vibe/README.md`.
+
 # Harnais Mistral Vibe : résumé de l'étape 1
 
 Date : 7 octobre 2026. Statut : étape 1 réalisée et vérifiée sur documents ; essai réel dans Vibe (recette) encore à faire.

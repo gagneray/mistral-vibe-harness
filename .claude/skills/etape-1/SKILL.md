@@ -19,7 +19,7 @@ Consignes complémentaires de l'utilisateur : $ARGUMENTS
 ## Phase A — Plan (mode plan, rien n'est écrit)
 
 A1. Vérifier les faits utiles à l'étape → `vibe-harness-expert`.
-Lui demander de confirmer en 2.25.8, avec source : clés de `config.toml` utilisées (`default_agent`, `active_model`, `compaction_model`, `[[models]]` et `thinking`, `enabled_skills`, `[tools.*]` avec `permission`/`allowlist`/`denylist`/`sensitive_patterns`), clés d'un fichier d'agent (`agent_type`, `active_model`, `system_prompt_id`, `enabled_tools`, `safety`), frontmatter de skill (`user-invocable`, `allowed-tools`, clé « explicit-only » ajoutée en 2.25.5), contrat des hooks (champs stdin, passage par un shell depuis 2.25.5), agent `plan`, `exit_plan_mode`, `ask_user_question`, chargement d'`AGENTS.md`, nom du provider intégré.
+Lui demander de confirmer en 2.26.0 (Unified Harness, D-10), avec source : clés de `config.toml` utilisées (`default_agent`, `active_model`, `compaction_model`, `[[models]]` et `thinking`, `enabled_skills`, `[tools.*]` avec `permission`/`allowlist`/`denylist`/`sensitive_patterns`), clés d'un fichier d'agent (`agent_type`, `active_model`, `system_prompt_id`, `enabled_tools`, `safety`), frontmatter de skill (`user-invocable`, `allowed-tools`, clé « explicit-only » ajoutée en 2.25.5), contrat des hooks (champs stdin, passage par un shell depuis 2.25.5), agent `plan`, outils réellement proposés au modèle (`exit_plan_mode`, `task` et `grep` ne le sont pas ; sous-agents par `spawn`/`wait`), `ask_user_question`, chargement d'`AGENTS.md`, nom du provider intégré.
 → vérif : chaque point a un statut et une URL ; `VIBE_FAITS_VERIFIES.md` sera mis à jour en phase C.
 
 A2. Revérifier la grille modèle / agent de `memoire/DECISIONS.md` (D-07) → `vibe-harness-expert`.
@@ -55,7 +55,7 @@ projet-mistral-vibe/
 ## Phase B — Réalisation (après validation)
 
 B1. `AGENTS.md` → `vibe-harness-expert`.
-Contenu : objet du dépôt (harnais générique, à compléter par le dépôt hôte), version min Vibe 2.25.8, Python 3.11, environnement WSL ; lignes directrices de `reference/karpathy_method.md` intégrées et complétées par :
+Contenu : objet du dépôt (harnais générique, à compléter par le dépôt hôte), version min Vibe 2.26.0, Python 3.11, environnement WSL ; lignes directrices de `reference/karpathy_method.md` intégrées et complétées par :
 - toute nouvelle demande commence par un plan soumis à validation, aucune écriture avant accord ;
 - méthode de raisonnement (guide, étape 7.2) ;
 - critères de réussite vérifiables et preuve par exécution ;
@@ -69,7 +69,7 @@ B2. `.vibe/config.toml` → `vibe-harness-expert`.
 → vérif : `tomllib` charge le fichier.
 
 B3. Orchestrateur et relecteur → `vibe-harness-expert`.
-`orchestrator.toml` + `prompts/orchestrator.md` : méthode Comprendre → Planifier (`todo`) → Valider (`ask_user_question`) → Exécuter une étape à la fois → Déléguer la relecture à `reviewer` via `task` → Vérifier → Conclure. Le prompt part d'une copie du prompt système par défaut de Vibe 2.25.8 (`vibe/core/prompts/` du dépôt officiel), sections ajoutées à la fin.
+`orchestrator.toml` + `prompts/orchestrator.md` : méthode Comprendre → Planifier (`todo`) → Valider (`ask_user_question`) → Exécuter une étape à la fois → Déléguer la relecture à `reviewer` via `spawn` puis `wait` → Vérifier → Conclure. Le prompt part d'une copie du prompt système par défaut de Vibe 2.26.0 (`vibe/core/prompts/` du dépôt officiel), sections ajoutées à la fin.
 `reviewer.toml` + `prompts/reviewer.md` : lecture seule, format de retour Bloquant / À corriger / Suggestion avec fichier:ligne et exemple complet.
 → vérif : chaque `system_prompt_id` a son fichier, chaque `active_model` existe dans `[[models]]`.
 
@@ -78,7 +78,7 @@ B4. Hook d'audit → `python-expert`.
 → vérif : tests verts, sortie copiée.
 
 B5. `README.md` et `.gitignore` → orchestrateur (rédaction directe).
-README : prérequis (WSL, `uv tool install mistral-vibe==2.25.8`, `vibe --setup`), import dans un dépôt RF (copier `AGENTS.md` et `.vibe/`, accepter la confiance), flux plan → validation → orchestrateur, lien vers la recette.
+README : prérequis (WSL, `uv tool install mistral-vibe==2.26.0`, `vibe --setup`), import dans un dépôt RF (copier `AGENTS.md` et `.vibe/`, accepter la confiance), flux plan → validation → orchestrateur, lien vers la recette.
 
 ## Phase C — Vérification et clôture
 
@@ -88,7 +88,7 @@ C2. Produire la recette manuelle (à exécuter par l'utilisateur sous WSL), adap
 - dialogue de confiance listant `AGENTS.md` et `.vibe/` ;
 - « Quelles sont les règles de ce projet ? » cite `AGENTS.md` ;
 - démarrage sur l'agent `plan` ; le plan est soumis avant toute écriture ;
-- `vibe --agent orchestrator` : `todo` rempli, `ask_user_question` avant exécution, appel `task(agent="reviewer")` ;
+- `vibe --agent orchestrator` : `todo` rempli, `ask_user_question` avant exécution, lancement de `reviewer` par `spawn` puis `wait` ;
 - `/thinking` : relever les niveaux disponibles et vérifier ceux de `[[models]]` ;
 - modèle effectif de `reviewer` lu dans son transcript (`/log`) ;
 - écriture dans `.vibe/` refusée ; `git push --force` refusé ;

@@ -15,16 +15,16 @@ Une étape = une session neuve, lancée par `/etape-1`, `/etape-2`, `/etape-3`. 
 
 | Outil | Version | Source officielle |
 | --- | --- | --- |
-| Mistral Vibe | 2.25.8 | https://docs.mistral.ai/vibe/code · https://github.com/mistralai/mistral-vibe (README, CHANGELOG, code au tag 2.25.8) |
+| Mistral Vibe | 2.26.0 (Unified Harness) | https://docs.mistral.ai/vibe/code · https://github.com/mistralai/mistral-vibe (README, CHANGELOG, code au tag `v2.26.0`) |
 | Robot Framework | 7.1 | https://robotframework.org/robotframework/7.1/RobotFrameworkUserGuide.html |
 | Python | 3.11 | https://docs.python.org/3.11/ |
 | Modèles Mistral | — | https://docs.mistral.ai/getting-started/models/models_overview/ |
 
 Règles :
 - Toute affirmation sur Vibe, RF ou Python s'appuie sur ces sources ; citer l'URL dans `memoire/VIBE_FAITS_VERIFIES.md` ou `memoire/DECISIONS.md`.
-- Doc et code divergent : le noter, retenir le comportement du code 2.25.8 et prévoir un test de recette.
+- Doc et code divergent : le noter, retenir le comportement du code 2.26.0 et prévoir un test de recette.
 - Recherche hors de ces sources (WebSearch, sites tiers) : la demander à l'utilisateur en justifiant le besoin.
-- Le CHANGELOG mentionne 2.26.0 : n'utiliser aucune fonctionnalité postérieure à 2.25.8.
+- N'utiliser aucune fonctionnalité postérieure à 2.26.0 (décision D-10 : référence passée de 2.25.8 à 2.26.0 le 2026-10-08).
 
 ## Environnement d'exécution
 
@@ -54,7 +54,7 @@ Chaque délégation transmet : objectif, fichiers à lire et à produire, contra
 
 ## Références locales
 
-- `reference/guide-harnais-vibe.md` : guide de mise en place (réf. 2.25.2, écarts connus dans `memoire/VIBE_FAITS_VERIFIES.md`).
+- `reference/guide-harnais-vibe.md` : guide de mise en place (réf. 2.25.2 et ancien moteur, écarts connus dans `memoire/VIBE_FAITS_VERIFIES.md`).
 - `reference/karpathy_method.md` : lignes directrices à intégrer à l'`AGENTS.md` du harnais.
 
 ## Mémoire entre sessions
