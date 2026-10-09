@@ -155,3 +155,22 @@ Le **Unified Harness** est le nouveau moteur d'exécution, actif par défaut dep
 | 8 | `bash.log` : `file_system.bash` en 2e colonne, `success` / `failure` ; `python3 << EOF` refusé (« not allowed as a standalone command », `denylist_standalone`) tracé en `failure` | `match = "bash"` et `tool_name` confirmés |
 | Bash dans `ask` | `sed -i` soumis à approbation | Pas de trou de permission |
 | Non faits | Capture du stdin d'un hook, point 9 (sous-dossier), point 10 (`/compact`), bonus (bash du relecteur) | Restent « À vérifier » |
+
+## GLM 5.3 et modèles (code au tag `v2.26.0` et doc Mistral, 2026-10-09 ; D-12)
+
+H = R26`harness/runtimes/python/python/mistralai_vibe_local_harness/vibe/`.
+
+| Fait | Statut | Détail | Source |
+| --- | --- | --- | --- |
+| GLM 5.3 chez Mistral | Confirmé (doc) | « third-party open weight text model from Z.ai, hosted by Mistral » ; ID `zai-glm-5-3` ; texte seul ; contexte 1M, sortie 128k ; appels de fonction ; 1,4 / 0,14 (cache) / 4,4 USD par M tokens | https://docs.mistral.ai/models/zai-glm-5-3 |
+| Effort de raisonnement GLM | Confirmé (doc) | `reasoning_effort` accepte `low`, `high`, `max`, pas `none` | https://docs.mistral.ai/capabilities/reasoning |
+| Providers intégrés | Confirmé | `mistral` et `llamacpp` seulement ; GLM sur `mistral` : aucun `[[providers]]` | R26`vibe/core/config/vibe_schema.py` (`DEFAULT_PROVIDERS`) |
+| Schéma `[[models]]` | Confirmé | `name`, `provider`, `alias` (= `name` par défaut), `display_name`, `temperature` (0.2), prix, `thinking`, `thinking_levels`, `supports_images` (False), `max_context_length`, `auto_compact_threshold` ; dictionnaire indexé par alias, fusion profonde avec les modèles intégrés | R26`vibe/core/config/models.py`, R26`vibe/core/config/vibe_schema.py` |
+| Traduction de `thinking` | Confirmé | `low`→`none`, `medium`/`high`/`max`→`high`, `off` = non envoyé. Sous Unified, adaptateur H`adapters/mistral.py` (choisi si backend `mistral`) ; même table que le backend historique | H`adapters/mistral.py`, H`_completion.py`, R26`vibe/core/llm/backend/mistral.py` |
+| Raisonnement renvoyé | Confirmé (code) | Chunks `thinking` lus en flux et hors flux, rejoués dans l'historique avec `tool_calls` ; rien ne dépend du nom de modèle. Compatibilité réelle avec GLM : à recetter | H`adapters/mistral.py` |
+| Modèle d'un sous-agent | Confirmé (Python), à recetter | Modèle actif de l'agent parent au moment du `spawn` (`create_child` copie le `config_orchestrator` du parent) ; `SpawnInput` sans champ modèle. L'avertissement dit « session's model » : écart sans effet ici (parent et session sur GLM), à trancher en recette (modèle du `reviewer`) | R26`vibe/app_server/_runtime.py`, R26`vibe/app_server/_agent_types.py` |
+| Changement d'agent | Confirmé (couches), à recetter | Ordre : défauts < GrowthBook < utilisateur < projet < env < session < profil d'agent < admin ; le profil l'emporte sur le modèle fixé par le premier message | R26`vibe/core/config/default_orchestrator.py`, R26`vibe/app_server/_session_model.py` |
+| `/model` | Confirmé | Écrit `active_model` dans la config utilisateur `~/.vibe/config.toml` et dans la surcharge de session ; surclassé par un profil d'agent ; pas une procédure de repli | R26`vibe/app_server/_config_write.py`, R26`vibe/core/config/default_orchestrator.py`, R26`README.md` |
+| Compaction | Confirmé | `compaction_model` gardé si même provider que le modèle actif : Small 4 reste utilisé avec GLM | R26`vibe/core/config/vibe_schema.py` |
+| Image avec GLM | Confirmé | Modèle sans images : `vision_model` s'il est défini (pas le cas), sinon premier modèle du même provider avec images (Medium 3.5), qui décrit l'image en texte | R26`vibe/core/config/vibe_schema.py` (`get_vision_fallback_model`), appelé par R26`vibe/app_server/_vision.py` |
+| `routed_*`, `allowed_models` | Confirmé | Sans effet ici (`active_model` fixé, liste vide) | R26`vibe/core/config/vibe_schema.py` |

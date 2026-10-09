@@ -15,7 +15,15 @@ Harnais générique pour [Mistral Vibe](https://docs.mistral.ai/vibe/code) 2.26.
 | `.vibe/skills/` | Vide à ce stade |
 | `tests_harnais/` | Tests pytest des hooks |
 
-Modèles : toutes les sessions et tous les sous-agents tournent en Mistral Medium 3.5 (alias intégré `mistral-medium-3.5`, réflexion `high`). Un sous-agent ignore son propre `active_model` et utilise le modèle de la session. La compaction utilise Mistral Small 4 sans réflexion.
+Modèles (GLM 5.3, hébergé par Mistral, déclaré par `[[models]]` dans `.vibe/config.toml`) :
+
+| Agent | Modèle | Réflexion (`thinking`) |
+| --- | --- | --- |
+| `plan`, `orchestrator` | GLM 5.3 (alias `glm-5-3`, ID `zai-glm-5-3`) | `max` ; l'API reçoit `high` (Vibe 2.26.0 ne transmet pas `max`) |
+| `reviewer` | Hérité de l'agent qui le lance (GLM 5.3) | Hérité |
+| Compaction | Mistral Small 4 (`mistral-small-latest`) | `off` |
+
+GLM 5.3 ne lit que du texte : une image est décrite par Medium 3.5, modèle de vision de repli du provider.
 
 ## Prérequis (WSL / Linux)
 
@@ -26,11 +34,22 @@ vibe --version        # doit afficher 2.26.0
 python3 --version     # 3.11 ou plus, utilisé par les hooks
 ```
 
+Clé : `MISTRAL_API_KEY` suffit (GLM 5.3 passe par le provider `mistral`), à condition que le compte ait accès à GLM 5.3. Ne jamais mettre de clé dans le dépôt.
+
+Ne pas utiliser `/thinking low` avec GLM : Vibe envoie alors `reasoning_effort = "none"`, que GLM refuse.
+
 pytest doit être disponible dans le shell qui lance `vibe` : sinon l'agent ne peut pas prouver ses changements. À la racine du dépôt, avant chaque session :
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate && pip install pytest
 ```
+
+## Repli vers Medium 3.5
+
+1. Remettre `active_model = "mistral-medium-3.5"` dans `.vibe/config.toml` et dans `.vibe/agents/orchestrator.toml` (l'entrée `[[models]]` de GLM peut rester).
+2. Lancer une session neuve.
+
+Ne pas passer par `/model` : il écrit `active_model` dans la config utilisateur (`~/.vibe/config.toml`), et le profil d'agent `orchestrator` l'emporte de toute façon.
 
 ## Importer le harnais dans un dépôt
 
@@ -70,7 +89,7 @@ Points 7a, 7b, 7d et 7e : préciser dans la demande « je teste les permissions,
 - [ ] 2. « Quelles sont les règles de ce projet ? » : la réponse cite `AGENTS.md`.
 - [ ] 3. La session démarre sur l'agent `plan`. Demander une petite modification : un plan est proposé sans aucune écriture hors du scratchpad ; aucune tentative de contournement par bash (`cat >`, `python3 -c`, `sed -i`…) ; une commande `bash` hors liste déclenche une demande. `exit_plan_mode` n'est pas attendu : l'agent invite à passer à `orchestrator`. `Shift+Tab` atteint `orchestrator`, qui voit le plan.
 - [ ] 4. `vibe --agent orchestrator` sur une petite tâche : `todo` rempli ; `ask_user_question` avant toute écriture ; appel `spawn` de `reviewer` puis `wait` (noter le nom d'outil affiché et s'il demande approbation) ; retour au format Bloquant / À corriger / Suggestion ; tests réellement exécutés et verts (sortie pytest visible).
-- [ ] 5. `/thinking` : relever les niveaux proposés et le niveau actif (attendu : `high`).
+- [ ] 5. `/thinking` : relever les niveaux proposés et le niveau actif (attendu : `max`).
 - [ ] 6. `/log`, puis explorer le dossier de session : modèle effectif de l'orchestrateur et de `reviewer` (attendu : celui de la session) ; présence de « Ajouts du harnais » dans le prompt système de l'orchestrateur et du relecteur ; outils appelés ; outils réellement disponibles pour `reviewer`. Relever si l'agent `plan` charge le prompt `cli` ou une variante `cli_2026-*`.
 - [ ] 7a. « Modifie `.vibe/config.toml` » est refusé sans question.
 - [ ] 7a bis. L'agent `plan` écrit son plan dans le scratchpad de la session (`<dossier /log>/scratchpad/`), pas dans `~/.vibe/plans/`.

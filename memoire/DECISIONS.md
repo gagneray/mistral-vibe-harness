@@ -22,7 +22,7 @@ Justification : exigence « toute nouvelle demande passe par un plan à valider 
 ## D-06 — Environnement d'exécution (2026-10-07, validée)
 Vibe et `robot` sous WSL/Linux ; hooks en `python3`, stdlib Python 3.11 ; chemins relatifs (harnais importé plus tard dans le dépôt de tests RF).
 
-## D-07 — Modèles Mistral par agent Vibe (2026-10-07, proposée, révisée par D-07b)
+## D-07 — Modèles Mistral par agent Vibe (2026-10-07, proposée, révisée par D-07b ; GLM réintroduit par D-12)
 
 Modèles actifs au 2026-10-07 :
 
@@ -48,7 +48,7 @@ Conséquence : une skill tourne avec le modèle de l'agent courant ; l'historisa
 Repli : si un sous-agent n'applique pas son propre `active_model`, tout en Medium 3.5 et la skill d'historisation écrit directement.
 Sources : https://docs.mistral.ai/getting-started/models/models_overview/ · https://docs.mistral.ai/inference/pricing · https://docs.mistral.ai/vibe/code/cli/configuration-reference · https://docs.mistral.ai/vibe/code/cli/agents
 
-## D-07b — Grille modèle / agent révisée (2026-10-07, validée, étape 1)
+## D-07b — Grille modèle / agent révisée (2026-10-07, validée, étape 1 ; `plan` et `orchestrator` remplacés par D-12)
 | Agent | Modèle | `thinking` | Mécanisme |
 | --- | --- | --- | --- |
 | `plan`, session par défaut | Medium 3.5 (alias intégré `mistral-medium-3.5` = `mistral-vibe-cli-latest`) | high | `active_model` global |
@@ -110,3 +110,20 @@ Sources : https://raw.githubusercontent.com/mistralai/mistral-vibe/v2.26.0/CHANG
   - `AGENTS.md` : un fichier ne se modifie que par l'outil d'édition ou d'écriture, jamais par le shell ; si l'outil échoue, s'arrêter et signaler.
 - Pas de changement de permissions : les modifications par `sed -i` étaient soumises à approbation (7d confirmé).
 Justification : recette du 2026-10-09 (`VIBE_FAITS_VERIFIES.md`, section « Recette 2026-10-09 ») ; demande utilisateur (instructions en français).
+
+## D-12 — Variante GLM 5.3 pour `plan` et `orchestrator` (2026-10-09, validée, recette à faire)
+| Agent | Modèle | `thinking` | Mécanisme |
+| --- | --- | --- | --- |
+| `plan` (démarrage) | `glm-5-3` (`zai-glm-5-3`, provider `mistral`) | `max` (l'API reçoit `high`) | `active_model` de `config.toml` + `[[models]]` projet |
+| `orchestrator` | `glm-5-3` | `max` | `active_model` d'`orchestrator.toml` |
+| `reviewer` | hérité : GLM | `max` | modèle actif de l'agent parent au `spawn` |
+| Compaction | Small 4, inchangé | `off` | `[compaction_model]`, même provider |
+| Repli | `mistral-medium-3.5` (alias intégré) | `high` | remettre `active_model` dans les deux fichiers, session neuve |
+
+- Pourquoi GLM revient : D-07 l'écartait comme « tiers ». Ce motif tombe, car Mistral l'héberge sur sa propre API (même clé `MISTRAL_API_KEY`, même backend, aucun `[[providers]]`). Demande de l'utilisateur.
+- `thinking = "max"` est gardé à la demande de l'utilisateur. En 2.26.0, `max` envoie `reasoning_effort = "high"` : le `max` de GLM n'est pas atteignable sans modifier Vibe. Commentaire dans la config.
+- Pas de `thinking_levels` (choix de l'utilisateur : minimum de clés). Risque documenté dans le README : `/thinking low` envoie `none`, que GLM refuse.
+- Prix renseignés (1,4 / 4,4 / 0,14 USD par M tokens) pour mesurer le coût. Pas de `max_context_length` : il relèverait le seuil de compaction vers 1M.
+- `reviewer` en effort maximal sur chaque relecture : coût et durée acceptés par l'utilisateur. Inévitable, car le sous-agent hérite du modèle du parent.
+- Repli : ne pas passer par `/model`, qui écrit dans `~/.vibe/config.toml` et que le profil d'`orchestrator` surclasse.
+Sources : https://docs.mistral.ai/models/zai-glm-5-3 · https://docs.mistral.ai/capabilities/reasoning · https://raw.githubusercontent.com/mistralai/mistral-vibe/v2.26.0/vibe/core/config/models.py · …/v2.26.0/vibe/core/config/vibe_schema.py · …/v2.26.0/harness/runtimes/python/python/mistralai_vibe_local_harness/vibe/adapters/mistral.py · …/v2.26.0/vibe/app_server/_runtime.py · …/v2.26.0/vibe/app_server/_config_write.py · …/v2.26.0/vibe/core/config/default_orchestrator.py

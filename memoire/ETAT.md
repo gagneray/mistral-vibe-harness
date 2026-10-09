@@ -1,6 +1,6 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-10-09 (recette WSL arrêtée par l'utilisateur, prompts traduits, correctifs D-11).
+Dernière mise à jour : 2026-10-09 (variante GLM 5.3, D-12 ; recette GLM à faire).
 
 | Étape | Commande | Statut | Livrables |
 | --- | --- | --- | --- |
@@ -11,16 +11,16 @@ Dernière mise à jour : 2026-10-09 (recette WSL arrêtée par l'utilisateur, pr
 
 ## Livrables de l'étape 1 (référence Vibe 2.26.0, D-10)
 - `AGENTS.md` : lignes directrices, plan validé avant toute écriture, agent `plan` sans écriture, fichiers modifiés uniquement par l'outil d'édition (jamais par le shell), refus définitif, outil de vérification manquant signalé, méthode de raisonnement, preuve par exécution.
-- `.vibe/config.toml` : `default_agent = "plan"`, `active_model = "mistral-medium-3.5"`, `[compaction_model]` Small 4, denylist bash (défauts + ajouts), fichiers du harnais protégés en écriture (le plan de l'agent `plan` va dans le scratchpad de session).
-- `.vibe/agents/orchestrator.toml`, `reviewer.toml` (`enabled_tools = ["read_file", "bash"]`) ; `.vibe/prompts/` = traduction française de `cli.md` v2.26.0 (D-11) + « Ajouts du harnais » (relecture unique par `spawn`/`wait`, points jugés, corrections non bloquantes après accord).
-- `.vibe/hooks.toml` + `hooks/audit_bash.py` ; `tests_harnais/test_audit_bash.py` reconstitué (fichier jamais committé) : 7 tests verts (Python 3.13 Windows).
+- `.vibe/config.toml` : `default_agent = "plan"`, `active_model = "glm-5-3"` + `[[models]]` GLM 5.3 (D-12 ; avant : `mistral-medium-3.5`), `[compaction_model]` Small 4, denylist bash (défauts + ajouts), fichiers du harnais protégés en écriture (le plan de l'agent `plan` va dans le scratchpad de session).
+- `.vibe/agents/orchestrator.toml` (`active_model = "glm-5-3"`), `reviewer.toml` (`enabled_tools = ["read_file", "bash"]`) ; `.vibe/prompts/` = traduction française de `cli.md` v2.26.0 (D-11) + « Ajouts du harnais » (relecture unique par `spawn`/`wait`, points jugés, corrections non bloquantes après accord).
+- `.vibe/hooks.toml` + `hooks/audit_bash.py` ; `tests_harnais/test_audit_bash.py` (suivi depuis 920b754) : 7 tests verts (Python 3.13 Windows, revérifié le 2026-10-09).
 - `Test_Etape_1/` : `projet_exemple/tests/` recréé (4 tests + `conftest.py`) ; `preparer.sh` → 11 tests verts.
 - `README.md` et `Test_Etape_1/README.md` : venv avec pytest activé avant `vibe`, recette 2.26.0 (points 1-11, 7a bis, 7e, bonus).
 
 ## Prochaine action
-1. Commit de l'étape 1 (avec accord ; inclure `tests_harnais/` et `Test_Etape_1/projet_exemple/tests/`, non suivis).
+1. Commit de D-11 et D-12 (avec accord).
 2. Facultatif : rejouer le point 4 pour vérifier les correctifs D-11 (relecture unique, pas de modification par le shell).
-3. Variante GLM (demande utilisateur du 2026-10-08, après la recette Medium 3.5) : décision D-12 à prendre (GLM écarté en D-07) ; obtenir le nom exact du modèle et du provider et l'accord pour consulter leur doc ; `vibe-harness-expert` vérifie `[[providers]]` / `[[models]]` en 2.26.0 ; modifier `active_model` de `config.toml` et d'`orchestrator.toml`, revoir `[compaction_model]` (ignoré si autre provider) ; recette ciblée points 3, 4, 7d.
+3. Variante GLM 5.3 (D-12) appliquée le 2026-10-09 : `plan` et `orchestrator` sur `glm-5-3`, `thinking = "max"` (l'API reçoit `high`), `reviewer` hérité, compaction Small 4. Reste la recette ciblée GLM de `Test_Etape_1/README.md`. Point critique : au premier message, vérifier que l'API accepte `reasoning_effort = "high"` pour GLM ; sinon décider `thinking = "off"`.
 4. Puis `/etape-2` dans une session neuve.
 
 ## Recette du 2026-10-08 (Vibe 2.26.0, harnais avant correctifs)

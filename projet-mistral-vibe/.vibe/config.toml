@@ -4,8 +4,9 @@
 # Agent au lancement interactif : l'agent intégré "plan" (lecture seule, plan à valider).
 default_agent = "plan"
 
-# Alias intégré : mistral-vibe-cli-latest (Medium 3.5), thinking = "high".
-active_model = "mistral-medium-3.5"
+# GLM 5.3 (D-12) : alias déclaré dans l'entrée [[models]] en fin de fichier.
+# Repli : active_model = "mistral-medium-3.5" (alias intégré), ici et dans agents/orchestrator.toml.
+active_model = "glm-5-3"
 
 # Pas d'enabled_skills : une liste blanche masquerait aussi les skills fournies par Vibe.
 # Pas de sensitive_patterns : la définir remplacerait les motifs .env* protégés par défaut.
@@ -36,3 +37,19 @@ denylist = ["*/.vibe/agents/*", "*/.vibe/prompts/*", "*/.vibe/hooks/*", "*/.vibe
 
 [tools.write_file]
 denylist = ["*/.vibe/agents/*", "*/.vibe/prompts/*", "*/.vibe/hooks/*", "*/.vibe/skills/*", "*/.vibe/logs/*", "*/.vibe/config.toml", "*/.vibe/hooks.toml"]
+
+# GLM 5.3, hébergé par Mistral : même provider et même clé MISTRAL_API_KEY ; texte seul, contexte 1M
+# (https://docs.mistral.ai/models/zai-glm-5-3). Une image est décrite par le modèle de vision de repli
+# du provider, Medium 3.5, faute de vision_model défini (vibe/core/config/vibe_schema.py, get_vision_fallback_model).
+# thinking : Vibe 2.26.0 envoie reasoning_effort "high" pour medium/high/max et "none" pour low
+# (adapters/mistral.py du Unified Harness). L'API reçoit donc "high" ; le "max" de GLM n'est pas atteignable.
+# GLM refuse "none" (https://docs.mistral.ai/capabilities/reasoning) : ne pas utiliser /thinking low.
+# Prix en USD par million de tokens (entrée, sortie, entrée en cache).
+[[models]]
+name = "zai-glm-5-3"
+provider = "mistral"
+alias = "glm-5-3"
+thinking = "max"
+input_price = 1.4
+output_price = 4.4
+cached_input_price = 0.14

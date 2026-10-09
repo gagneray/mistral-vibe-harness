@@ -1,5 +1,6 @@
 # Sous-agent de relecture, lancé par l'orchestrateur avec l'outil spawn (agentType = "reviewer") puis wait.
-# En 2.26.0, un sous-agent ignore active_model (il tourne sur le modèle de la session) : pas de clé ici.
+# En 2.26.0, un sous-agent ignore active_model : il hérite du modèle actif de l'agent qui le lance
+# (GLM 5.3, vibe/app_server/_runtime.py, create_child). Pas de clé ici.
 # La lecture seule tient à enabled_tools (ni edit ni write_file). Le plafond d'outils est calculé
 # sur les outils natifs : grep n'en fait pas partie, la recherche passe par bash (grep -n, find).
 agent_type = "subagent"

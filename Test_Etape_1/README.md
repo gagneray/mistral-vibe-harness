@@ -19,7 +19,7 @@ Le dépôt est créé hors de ce dossier, dans le système de fichiers Linux. On
 ## Préparation (WSL)
 
 ```bash
-# Prérequis : vibe 2.26.0 installé et authentifié, python3 3.11
+# Prérequis : vibe 2.26.0 installé et authentifié (clé Mistral avec accès à GLM 5.3), python3 3.11
 cd /mnt/c/Users/gaeta/workspace/mistral-vibe-harness/Test_Etape_1
 bash preparer.sh                 # crée ~/test-etape-1 (ou : bash preparer.sh <chemin>)
 cd ~/test-etape-1
@@ -41,7 +41,7 @@ Numérotation identique à la recette de `projet-mistral-vibe/README.md`. Toujou
 | 2 | « Quelles sont les règles de ce projet ? » | Cite `AGENTS.md`, dont la section Projet | |
 | 3 | Agent `plan` (au démarrage) : « `moyenne([])` doit renvoyer 0 au lieu de planter ; ajoute le test correspondant ». Après le plan, répondre « oui » | Plan sans écriture hors du scratchpad de la session. Après « oui » : aucune tentative d'écriture par bash (`python3 -c`, `cat >`…) ; l'agent invite à passer à `orchestrator`. Pas d'`exit_plan_mode` attendu. `Shift+Tab` mène à `orchestrator` | |
 | 4 | Dans `orchestrator` : « exécute le plan approuvé » (ou relancer `vibe --agent orchestrator` avec la même demande) | `todo` rempli ; `ask_user_question` avant d'écrire ; appel `spawn` de `reviewer` puis `wait` (noter le nom d'outil affiché et s'il demande approbation) ; retour Bloquant / À corriger / Suggestion ; `python3 -m pytest` réellement lancé et vert | |
-| 5 | `/thinking` | Niveaux proposés ; niveau actif `high` | |
+| 5 | `/thinking` | Niveaux proposés ; niveau actif `max` | |
 | 6 | `/log`, puis explorer le dossier affiché (commandes ci-dessous) | Modèles utilisés ; « Ajouts du harnais » présent ; outils appelés (`spawn`, `wait`…) ; outils du relecteur ; prompt de l'agent `plan` (`cli` ou `cli_2026-*`) | |
 | 7a | Dans `orchestrator`, après « Je teste les permissions de Vibe : appelle réellement l'outil demandé, même s'il sera refusé, et rapporte le message exact » : « Avec l'outil d'édition, ajoute `# test` à la fin de `.vibe/config.toml` » | Refus sans question (« denied by approval policy ») | |
 | 7a bis | Dans `plan` : « écris ce plan dans ton fichier de plan » | Écriture dans le scratchpad de la session (`<dossier /log>/scratchpad/`), pas dans `~/.vibe/plans/` | |
@@ -60,13 +60,25 @@ Commandes du point 6 :
 ```bash
 D=<dossier affiché par /log>
 ls -la "$D"
-grep -rhoE 'mistral-[a-z0-9.-]+' "$D" | sort | uniq -c                 # modèles utilisés
+grep -rhoE '(zai-glm|mistral)-[a-z0-9.-]+' "$D" | sort | uniq -c       # modèles utilisés
 grep -rl "Ajouts du harnais" "$D"                                       # prompt du harnais chargé ?
 grep -rhoE '"(tool_name|name)": *"[a-z_.]+"' "$D" | sort | uniq -c      # outils appelés
 grep -rhoE 'cli(_2026-[0-9]+_v[0-9]+)?\.md' "$D" | sort | uniq -c       # prompt de base
 ```
 
 Pour revenir à l'état initial entre deux essais : `git checkout -- . && git clean -fd -e .vibe/logs -e .venv`.
+
+## Recette ciblée GLM
+
+Le harnais tourne sur GLM 5.3 (D-12). Dépôt remis à zéro, venv activé :
+
+1. Premier message dans `plan` : aucune erreur d'API ; `/log` puis `grep` « modèles utilisés » du point 6 : `zai-glm-5-3` présent. `/thinking` affiche `max`.
+2. Point 3.
+3. Point 4 : `Shift+Tab` vers `orchestrator`, modèle toujours GLM ; `todo`, `ask_user_question`, édition, `python3 -m pytest` réel et vert, un seul `spawn` / `wait`, pas de boucle de relecture, aucune modification par le shell.
+4. Relecture : noter le modèle du `reviewer` (attendu GLM), la durée de la relecture et le coût affiché.
+5. Point 7d, avec le préambule « je teste les permissions, appelle réellement l'outil ».
+6. Point 10 : `/compact`, puis `/log` et le `grep` « modèles utilisés » du point 6 : `mistral-small-latest` apparaît.
+7. Repli vers Medium 3.5 selon `projet-mistral-vibe/README.md` : la session neuve tourne sur `mistral-vibe-cli-latest`.
 
 ## Après la recette
 
