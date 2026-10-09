@@ -1,6 +1,6 @@
 ---
 name: etape-3
-description: Étape 3 - ajoute au harnais Vibe l'historisation de chaque refacto (skill historiser-refacto, sous-agent historien, fichiers markdown numérotés dans historisation_refacto/ et INDEX).
+description: Étape 3 - ajoute au harnais Vibe l'historisation de chaque refacto (skill historiser-refacto, fichiers markdown numérotés dans historisation_refacto/ et INDEX).
 disable-model-invocation: true
 argument-hint: "[consignes complémentaires]"
 ---
@@ -20,13 +20,13 @@ L'expérimentation doit dire si la refacto assistée par Vibe vaut la peine. Cha
 
 ## Conception attendue
 - Skill Vibe `historiser-refacto` (`.vibe/skills/historiser-refacto/`), appelable en `/historiser-refacto` et appelée en dernière étape de `/refacto-test`.
-- Sous-agent `historien` (modèle léger, décision D-07) : la skill lui délègue l'écriture via `spawn`/`wait`. Il ne voit pas la conversation : l'orchestrateur lui transmet un résumé structuré suivant le modèle. Si la recette de l'étape 1 a montré qu'un sous-agent ne peut pas avoir son propre modèle, la skill écrit directement (repli D-07).
+- Pas de sous-agent `historien` : un sous-agent ne peut pas avoir son propre modèle, il prend celui de l'agent qui le lance (`vibe/app_server/_agent_types.py`, D-12). Un modèle léger est donc impossible : repli D-07b, l'orchestrateur remplit l'entrée lui-même avec l'outil d'écriture, après création du fichier par le script.
 - Un fichier par demande : `historisation_refacto/NNNN_AAAA-MM-JJ_<test-slug>.md`, `NNNN` séquentiel.
 - Numérotation et création par un script Python déterministe (`nouvelle_entree.py` dans le dossier de la skill) : calcule le numéro suivant, crée le fichier depuis le modèle, ajoute la ligne à l'INDEX, affiche le chemin créé.
 - `historisation_refacto/INDEX.md` : tableau, une ligne par entrée (n°, date, test, résultat, lien).
 - Modèle d'entrée (`modele.md` dans le dossier de la skill) :
-  1. Demande : fichier, test, consignes, date, modèles et version du harnais ;
-  2. Méthode : étapes suivies, agents appelés, nombre d'itérations, commandes lancées ;
+  1. Demande : fichier, test, consignes, date, modèle effectif et niveau de `thinking` (GLM 5.3 ou Medium 3.5), version de Vibe et du harnais ;
+  2. Méthode : étapes suivies, agents appelés (`spawn`), nombre d'itérations, commandes lancées, coût relevé par `/status` ;
   3. Difficultés : blocages, questions posées, hypothèses ;
   4. Résultat : statut avant/après, résumé du diff, durée approximative, verdict du relecteur ;
   5. Améliorations : pour le harnais, pour la consigne, pour le test.
@@ -36,7 +36,7 @@ L'expérimentation doit dire si la refacto assistée par Vibe vaut la peine. Cha
 
 ## Phase A — Plan (mode plan, rien n'est écrit)
 
-A1. Vérifier → `vibe-harness-expert` : skill qui exécute un script de son dossier (chemin, permission `bash`), skill qui délègue à un sous-agent (`spawn`/`wait`), ordre des hooks `post_agent` si deux hooks coexistent, `enabled_skills` à compléter.
+A1. Vérifier → `vibe-harness-expert` : skill qui exécute un script de son dossier (chemin, permission `bash`) ; ordre des hooks `post_agent` si deux hooks coexistent, et partage du plafond de 3 relances ; écriture dans `historisation_refacto/` non bloquée par les denylists de `[tools.edit]` / `[tools.write_file]`. Pas d'`enabled_skills` (décision de l'étape 1).
 → vérif : statuts et URL.
 
 A2. Soumettre le plan (ExitPlanMode) : conception ci-dessus, choix sur le hook optionnel, modèle d'entrée complet, exemple d'entrée remplie.
@@ -46,7 +46,7 @@ A2. Soumettre le plan (ExitPlanMode) : conception ci-dessus, choix sur le hook o
 B1. Script et tests → `python-expert` : `nouvelle_entree.py` (stdlib ; slug ASCII ; dossier vide → 0001 ; INDEX créé s'il manque) ; tests pytest : dossier vide, numéros existants avec trou, nom de test avec espaces et accents, INDEX absent.
 → vérif : tests verts, sortie copiée.
 
-B2. Intégration Vibe → `vibe-harness-expert` : `SKILL.md`, `modele.md`, `historien.toml` + `prompts/historien.md` (écriture bornée à `*/historisation_refacto/*`, format strict et exemple), hook optionnel si retenu, ajout de l'étape finale dans `refacto-test` et `orchestrator.md`, `enabled_skills`, permission `bash` du script.
+B2. Intégration Vibe → `vibe-harness-expert` : `SKILL.md` (format strict et exemple), `modele.md`, hook optionnel si retenu, ajout de l'étape finale dans `refacto-test` et `orchestrator.md`, permission `bash` du script (allowlist = défauts + script, la liste remplaçant celle par défaut).
 → vérif : `tomllib` ; références croisées.
 
 B3. Exemple d'entrée remplie (fictive, signalée comme telle) dans le dossier de la skill → orchestrateur, relu par `robot-framework-expert` pour la vraisemblance RF.
@@ -59,7 +59,7 @@ C2. Recette manuelle sous WSL :
 - `/historiser-refacto` apparaît dans l'autocomplétion ;
 - une refacto complète sur la suite témoin crée `0001_...md` et la ligne d'INDEX ;
 - une deuxième refacto crée `0002_...md` et son analyse cite les améliorations de `0001` ;
-- l'entrée est écrite par `historien` (vérifier le modèle via `/log`) ;
+- l'entrée est remplie avec des faits : commandes, résultats, modèle, coût `/status` ;
 - hook optionnel : refus de conclure sans entrée.
 
 C3. Mémoire : `ETAT.md` (harnais complet, expérimentation prête), `DECISIONS.md`, `VIBE_FAITS_VERIFIES.md`.

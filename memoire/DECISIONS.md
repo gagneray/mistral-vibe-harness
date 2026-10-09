@@ -127,3 +127,11 @@ Justification : recette du 2026-10-09 (`VIBE_FAITS_VERIFIES.md`, section « Rece
 - `reviewer` en effort maximal sur chaque relecture : coût et durée acceptés par l'utilisateur. Inévitable, car le sous-agent hérite du modèle du parent.
 - Repli : ne pas passer par `/model`, qui écrit dans `~/.vibe/config.toml` et que le profil d'`orchestrator` surclasse.
 Sources : https://docs.mistral.ai/models/zai-glm-5-3 · https://docs.mistral.ai/capabilities/reasoning · https://raw.githubusercontent.com/mistralai/mistral-vibe/v2.26.0/vibe/core/config/models.py · …/v2.26.0/vibe/core/config/vibe_schema.py · …/v2.26.0/harness/runtimes/python/python/mistralai_vibe_local_harness/vibe/adapters/mistral.py · …/v2.26.0/vibe/app_server/_runtime.py · …/v2.26.0/vibe/app_server/_config_write.py · …/v2.26.0/vibe/core/config/default_orchestrator.py
+
+## D-13 — Skills des étapes 2 et 3 alignées sur les acquis de l'étape 1 (2026-10-09, validée)
+- Refacto confiée à un sous-agent spécialiste `rf-refactorer` (RF 7.1 et Python des bibliothèques), lancé par `spawn` / `wait` à chaque itération (choix de l'utilisateur). Il tourne sur le modèle de l'orchestrateur : le coût de chaque itération est à mesurer.
+- Diagnostic outillé : script `resume_resultat.py` (résumé court d'`output.xml`), lu par l'agent et par le hook. Raison : sortie bash tronquée à 16 000 octets, `log.html` illisible pour l'agent.
+- Étape 3 : pas de sous-agent `historien` (modèle hérité) ; l'orchestrateur remplit l'entrée.
+- Pas d'`enabled_skills` ; allowlist bash = défauts + ajouts (la liste remplace celle par défaut).
+- À trancher en A1 de l'étape 2 : périmètre d'écriture de `rf-refactorer`, nouvel essai après échec d'édition, fréquence de la relecture.
+Sources : R26`vibe/core/tools/builtins/bash.py` (`default_timeout = 300`, `max_output_bytes = 16_000`) · R26`README.md` (`post_agent`) · D-10 à D-12.
