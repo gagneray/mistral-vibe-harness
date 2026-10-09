@@ -9,3 +9,23 @@ type = "post_tool"
 match = "bash"
 command = "python3 .vibe/hooks/audit_bash.py"
 description = "Trace chaque commande shell dans .vibe/logs/bash.log."
+
+# Refacto RF : un sous-agent (parent_session_id renseigné) n'écrit que des .robot / .resource.
+# match comparé aux noms natif et historique (edit = file_system.search_replace).
+# strict : un échec du hook (python3 absent, plantage) refuse aussi l'écriture, y compris pour l'orchestrateur.
+[[hooks]]
+name = "guard-subagent-write"
+type = "pre_tool"
+match = "re:edit|write_file"
+command = "python3 .vibe/hooks/guard_subagent_write.py"
+strict = true
+description = "Refuse à un sous-agent toute écriture hors fichiers .robot et .resource."
+
+# Refacto RF : pas de fin de tour de l'orchestrateur tant que le test refactorisé n'est pas PASS
+# (état .refacto/courant.json, résultat results/refacto/apres/output.xml). Vibe relance 3 fois au plus.
+[[hooks]]
+name = "require-green-test"
+type = "post_agent"
+command = "python3 .vibe/hooks/require_green_test.py"
+timeout = 30
+description = "Refuse la fin de tour si la refacto en cours n'a pas un test PASS à jour."

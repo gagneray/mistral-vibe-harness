@@ -1,0 +1,13 @@
+# Sous-agent de refacto d'un test Robot Framework, lancé par l'orchestrateur (skill refacto-test)
+# avec l'outil spawn (agentType = "rf-refactorer") puis wait. Une itération = un lancement.
+# En 2.26.0, un sous-agent ignore active_model : il hérite du modèle actif de l'agent qui le lance
+# (GLM 5.3, vibe/app_server/_runtime.py, create_child). Pas de clé ici.
+# Pas de [tools.*] : un sous-agent perd ces listes (vibe/app_server/_runtime.py). L'écriture hors
+# *.robot / *.resource est refusée par le hook pre_tool guard-subagent-write (.vibe/hooks.toml) ;
+# la denylist .vibe/ du projet s'applique aussi. grep n'est pas un outil natif : recherche via bash.
+agent_type = "subagent"
+display_name = "Refactoriseur RF"
+description = "Refactorise un seul test Robot Framework 7.1 selon un plan validé : n'écrit que des fichiers .robot et .resource, préserve assertions, données, keywords métier, tags, setup et teardown, ne lance pas robot. À lancer uniquement par la skill refacto-test."
+safety = "neutral"
+system_prompt_id = "rf-refactorer"
+enabled_tools = ["read_file", "edit", "write_file", "bash"]

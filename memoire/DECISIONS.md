@@ -135,3 +135,20 @@ Sources : https://docs.mistral.ai/models/zai-glm-5-3 · https://docs.mistral.ai/
 - Pas d'`enabled_skills` ; allowlist bash = défauts + ajouts (la liste remplace celle par défaut).
 - À trancher en A1 de l'étape 2 : périmètre d'écriture de `rf-refactorer`, nouvel essai après échec d'édition, fréquence de la relecture.
 Sources : R26`vibe/core/tools/builtins/bash.py` (`default_timeout = 300`, `max_output_bytes = 16_000`) · R26`README.md` (`post_agent`) · D-10 à D-12.
+
+## D-14 — Refacto Robot Framework, étape 2 (2026-10-09, validée, recette à faire)
+Réponses de l'utilisateur (A1) :
+- Bibliothèques du dépôt cible : Browser, SeleniumLibrary, RequestsLibrary, bibliothèques standard (+ Python maison). Pas de suite témoin : recette sur le dépôt cible, en local.
+- Itérations max : 3 (cohérent avec les 3 relances de `post_agent`). Validation : `robot --test` vert, sans `--dryrun` (D-05).
+- `rf-refactorer` n'écrit que `*.robot` / `*.resource` ; les bibliothèques Python sont lues seulement.
+- Échec de l'outil d'édition : relire, un seul nouvel essai avec l'outil d'édition, puis arrêt (règle globale d'`AGENTS.md`, remplace l'arrêt immédiat de D-11).
+- Une seule relecture `rf-reviewer`, au premier test vert ; nouvelle itération seulement sur un Bloquant accepté ; `rf-reviewer` remplace `reviewer` pendant une refacto.
+
+Mécanismes :
+1. Validation par hook `post_agent` `require_green_test.py` (option a) : l'agent lance `robot`, le hook vérifie la preuve (`results/refacto/apres/output.xml` PASS, aucun `.robot`/`.resource` plus récent ; pour `terminee`, seules les éditions entre `output.xml` et `courant.json` comptent ; nom en double → refus). Passe pour un sous-agent, sans `.refacto/courant.json`, ou si `statut = "arretee"`. Option b (hook lançant `robot`) écartée : délai du hook et plafond de 300 s.
+2. `.refacto/courant.json` (`fichier`, `test`, `statut`, `motif`) écrit par l'orchestrateur après accord (`en_cours`) puis à la fin (`terminee` / `arretee`).
+3. Écriture bornée par hook `pre_tool` `guard_subagent_write.py` (`strict`, `match = "re:edit|write_file"`) : un sous-agent n'écrit que `.robot` / `.resource`. Raison : listes `[tools.*]` d'un sous-agent perdues.
+4. Les sous-agents lisent `rf-conventions` par `read_file` (pas d'outil `skill`).
+5. Allowlist bash = 44 défauts + `robot` + `python3 .vibe/hooks/resume_resultat.py`. `robot` passe sans demande dans tous les agents. L'exécution de référence est la seule exception à « plan avant toute écriture ». Test de plus de 300 s : non validable, arrêt.
+Coût estimé : 0,5 à 1,5 USD et 5 à 15 min par refacto (GLM 5.3), à mesurer par `/status`.
+Sources : R26`vibe/app_server/_skill_invocation.py` · R26`vibe/app_server/_runtime.py` · H`_subagents/_configuration.py` · H`_foreign_hooks.py` · H`_hook_matcher.py` · R26`harness/core/src/core/features/file_system/mod.rs` · R26`vibe/core/tools/builtins/bash.py` · https://robotframework.org/robotframework/7.1/RobotFrameworkUserGuide.html (3.1.2, 3.1.3, 3.5.2).

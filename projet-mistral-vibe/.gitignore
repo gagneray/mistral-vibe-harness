@@ -1,6 +1,10 @@
 # Vibe : traces locales écrites par les hooks
 .vibe/logs/
 
+# Refacto Robot Framework : sorties d'exécution et état de la refacto en cours
+results/
+.refacto/
+
 # Secrets (Vibe demande avant de les lire, mais ils ne doivent jamais être commités)
 .env
 .env.*

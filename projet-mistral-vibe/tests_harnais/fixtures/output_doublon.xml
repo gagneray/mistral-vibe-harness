@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.1 (Python 3.13.12 on win32)" generated="2026-10-09T18:35:30.999457" rpa="false" schemaversion="5">
+<suite id="s1" name="Suites" source="/home/user/depot/suites">
+<suite id="s1-s1" name="Connexion" source="/home/user/depot/suites/connexion.robot">
+<test id="s1-s1-t1" name="Connexion Valide" line="2">
+<kw name="Should Be Equal" owner="BuiltIn">
+<arg>admin</arg>
+<arg>admin</arg>
+<doc>Fails if the given objects are unequal.</doc>
+<status status="PASS" start="2026-10-09T18:35:31.025524" elapsed="0.000156"/>
+</kw>
+<status status="PASS" start="2026-10-09T18:35:31.025038" elapsed="0.000753"/>
+</test>
+<status status="PASS" start="2026-10-09T18:35:31.024058" elapsed="0.002004"/>
+</suite>
+<suite id="s1-s2" name="Connexion Bis" source="/home/user/depot/suites/connexion_bis.robot">
+<test id="s1-s2-t1" name="Connexion Valide" line="2">
+<kw name="Should Be True" owner="BuiltIn">
+<arg>${True}</arg>
+<doc>Fails if the given condition is not true.</doc>
+<status status="PASS" start="2026-10-09T18:35:31.027472" elapsed="0.000115"/>
+</kw>
+<status status="PASS" start="2026-10-09T18:35:31.027265" elapsed="0.000399"/>
+</test>
+<status status="PASS" start="2026-10-09T18:35:31.026475" elapsed="0.001347"/>
+</suite>
+<status status="PASS" start="2026-10-09T18:35:31.000586" elapsed="0.027554"/>
+</suite>
+<statistics>
+<total>
+<stat pass="2" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="2" fail="0" skip="0" id="s1" name="Suites">Suites</stat>
+<stat pass="1" fail="0" skip="0" id="s1-s1" name="Connexion">Suites.Connexion</stat>
+<stat pass="1" fail="0" skip="0" id="s1-s2" name="Connexion Bis">Suites.Connexion Bis</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

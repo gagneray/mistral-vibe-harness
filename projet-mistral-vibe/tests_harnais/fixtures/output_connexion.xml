@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.1 (Python 3.13.12 on win32)" generated="2026-10-09T18:21:29.193259" rpa="false" schemaversion="5">
+<suite id="s1" name="Tests" source="/home/user/depot/tests">
+<suite id="s1-s1" name="Connexion" source="/home/user/depot/tests/connexion.robot">
+<test id="s1-s1-t1" name="Connexion Valide" line="5">
+<kw name="Ouvrir Session">
+<kw name="Log" owner="BuiltIn">
+<msg time="2026-10-09T18:21:29.220073" level="INFO">Connexion de admin</msg>
+<arg>Connexion de ${utilisateur}</arg>
+<doc>Logs the given message with the given level.</doc>
+<status status="PASS" start="2026-10-09T18:21:29.219950" elapsed="0.000166"/>
+</kw>
+<kw name="Verifier Mot De Passe">
+<kw name="Should Be Equal" owner="BuiltIn">
+<arg>${mot_de_passe}</arg>
+<arg>admin</arg>
+<arg>msg=Mot de passe refusé pour l'utilisateur</arg>
+<doc>Fails if the given objects are unequal.</doc>
+<status status="PASS" start="2026-10-09T18:21:29.220407" elapsed="0.000166"/>
+</kw>
+<arg>${mot_de_passe}</arg>
+<status status="PASS" start="2026-10-09T18:21:29.220222" elapsed="0.000412"/>
+</kw>
+<arg>admin</arg>
+<arg>admin</arg>
+<status status="PASS" start="2026-10-09T18:21:29.219594" elapsed="0.001078"/>
+</kw>
+<status status="PASS" start="2026-10-09T18:21:29.219147" elapsed="0.001600"/>
+</test>
+<test id="s1-s1-t2" name="Connexion Refusee" line="8">
+<kw name="Ouvrir Session">
+<kw name="Log" owner="BuiltIn">
+<msg time="2026-10-09T18:21:29.221667" level="INFO">Connexion de admin</msg>
+<arg>Connexion de ${utilisateur}</arg>
+<doc>Logs the given message with the given level.</doc>
+<status status="PASS" start="2026-10-09T18:21:29.221582" elapsed="0.000117"/>
+</kw>
+<kw name="Verifier Mot De Passe">
+<kw name="Should Be Equal" owner="BuiltIn">
+<msg time="2026-10-09T18:21:29.222126" level="FAIL">Mot de passe refusé pour l'utilisateur: mauvais != admin</msg>
+<arg>${mot_de_passe}</arg>
+<arg>admin</arg>
+<arg>msg=Mot de passe refusé pour l'utilisateur</arg>
+<doc>Fails if the given objects are unequal.</doc>
+<status status="FAIL" start="2026-10-09T18:21:29.221942" elapsed="0.000296">Mot de passe refusé pour l'utilisateur: mauvais != admin</status>
+</kw>
+<arg>${mot_de_passe}</arg>
+<status status="FAIL" start="2026-10-09T18:21:29.221778" elapsed="0.000555">Mot de passe refusé pour l'utilisateur: mauvais != admin</status>
+</kw>
+<arg>admin</arg>
+<arg>mauvais</arg>
+<status status="FAIL" start="2026-10-09T18:21:29.221409" elapsed="0.000989">Mot de passe refusé pour l'utilisateur: mauvais != admin</status>
+</kw>
+<status status="FAIL" start="2026-10-09T18:21:29.221198" elapsed="0.001298">Mot de passe refusé pour l'utilisateur: mauvais != admin</status>
+</test>
+<doc>Suite témoin pour les fixtures des hooks.</doc>
+<status status="FAIL" start="2026-10-09T18:21:29.217562" elapsed="0.005262"/>
+</suite>
+<status status="FAIL" start="2026-10-09T18:21:29.194387" elapsed="0.028808"/>
+</suite>
+<statistics>
+<total>
+<stat pass="1" fail="1" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="1" fail="1" skip="0" id="s1" name="Tests">Tests</stat>
+<stat pass="1" fail="1" skip="0" id="s1-s1" name="Connexion">Tests.Connexion</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

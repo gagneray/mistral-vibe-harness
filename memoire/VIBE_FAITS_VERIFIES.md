@@ -174,3 +174,23 @@ H = R26`harness/runtimes/python/python/mistralai_vibe_local_harness/vibe/`.
 | Compaction | Confirmé | `compaction_model` gardé si même provider que le modèle actif : Small 4 reste utilisé avec GLM | R26`vibe/core/config/vibe_schema.py` |
 | Image avec GLM | Confirmé | Modèle sans images : `vision_model` s'il est défini (pas le cas), sinon premier modèle du même provider avec images (Medium 3.5), qui décrit l'image en texte | R26`vibe/core/config/vibe_schema.py` (`get_vision_fallback_model`), appelé par R26`vibe/app_server/_vision.py` |
 | `routed_*`, `allowed_models` | Confirmé | Sans effet ici (`active_model` fixé, liste vide) | R26`vibe/core/config/vibe_schema.py` |
+
+## Étape 2 (code au tag `v2.26.0`, 2026-10-09 ; D-14)
+
+| Fait | Statut | Détail | Source |
+| --- | --- | --- | --- |
+| Arguments d'une skill | Précisé | Aucune substitution (`$ARGUMENTS` inexistant) : le message `/skill …` reste tel quel, le corps de la skill est ajouté après (`<skill_content>`). Exécutée dans l'agent courant | R26`vibe/app_server/_skill_invocation.py`, R26`vibe/core/tools/builtins/skill.py` |
+| Outils pendant une skill | Confirmé | Aucune restriction (`allowed_tool_names=[]`) : `spawn` possible depuis `orchestrator` | H`_subagents/_configuration.py` |
+| `allowed-tools` | Précisé : ignoré | Absent du résolveur de permissions ; la doc dit « restricts » | R26`vibe/app_server/_unified_permissions.py`, https://docs.mistral.ai/vibe/code/cli/skills |
+| `spawn` dans un sous-agent | Infirmé | Sous-agents désactivés chez l'enfant | H`_subagents/_configuration.py` |
+| Permission effective d'un sous-agent | Confirmé | Plus stricte entre parent et plafond ; outil hors plafond = `deny` ; listes de la config de session (denylist `.vibe/`, allowlist bash) appliquées | H`_subagents/_configuration.py`, R26`vibe/app_server/_unified_permissions.py` |
+| Hook `pre_tool` sur l'édition | Confirmé | `match` comparé à `file_system.search_replace`, `search_replace`, `edit`, `file_system.write_file`, `write_file` (`fullmatch`) ; chemin dans `tool_input.file_path` ; `deny` = outil non exécuté, motif renvoyé ; `strict` = refus si le hook échoue | H`_hook_matcher.py`, H`_foreign_hooks.py` |
+| `parent_session_id` | Confirmé (code) | Renseigné dans un sous-agent ; pas de nom d'agent sur stdin | H`_foreign_hooks.py`, H`_subagents/_controller.py` |
+| Délai bash | Confirmé | `timeout_seconds` 1 à 300, plafond compilé ; `[tools.bash] default_timeout` sans effet sous Unified | R26`harness/core/src/core/features/file_system/mod.rs`, H`_shell_tools.py` |
+| Défauts de l'allowlist bash | Confirmé | 44 préfixes (`cd`, `echo`, `git diff/log/status`, `tree`, `whoami` + 37 POSIX) | R26`vibe/core/tools/builtins/bash.py` |
+| `wait` | Confirmé | `timeoutMs` sans maximum ; dépassement = erreur réessayable, l'enfant continue | R26`harness/core/src/core/features/subagents/tools.rs`, H`_subagents/_controller.py` |
+| Approbation `ask` dans un sous-agent | À vérifier | Remontée à l'utilisateur probable (CL 2.25.5) ; recette étape 2, point 14 | R26`CHANGELOG.md` |
+| Permission de `spawn` | À vérifier | Recette étape 2, point 15 | — |
+| `post_agent` en fin de sous-agent | À vérifier | Recette étape 2, point 16 | H`_foreign_hooks.py` |
+
+Robot Framework 7.1 (User Guide, exécution réelle dans un venv) : `--test` ignore casse, espaces et underscores ; `[`, `*`, `?` sont des motifs (échapper `[[]`, `[*]`, `[?]`) ; un SKIP donne rc 0 et 252 = aucun test sélectionné ; lancer un fichier ignore les `__init__.robot` des dossiers parents (3.5.2).

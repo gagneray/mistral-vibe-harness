@@ -1,12 +1,12 @@
 # État d'avancement
 
-Dernière mise à jour : 2026-10-09 (variante GLM 5.3, D-12 ; recette GLM à faire).
+Dernière mise à jour : 2026-10-09 (étape 2 réalisée, D-14 ; recettes GLM et étape 2 à faire).
 
 | Étape | Commande | Statut | Livrables |
 | --- | --- | --- | --- |
 | 0. Outillage Claude Code | — | Terminée | `CLAUDE.md`, `.claude/`, `memoire/`, `reference/` |
 | 1. Squelette générique | `/etape-1` | Recette WSL 2026-10-09 jugée suffisante (points 0-8) ; correctifs D-11 appliqués | `projet-mistral-vibe/` (AGENTS.md, README.md, .gitignore, .vibe/, tests_harnais/), `Test_Etape_1/` |
-| 2. Refacto Robot Framework | `/etape-2` | À faire | skill `refacto-test`, sous-agents RF, hook de validation |
+| 2. Refacto Robot Framework | `/etape-2` | Réalisée 2026-10-09, vérifiée (harness-verifier), recette WSL à faire | skills `refacto-test` et `rf-conventions`, sous-agents `rf-refactorer` / `rf-reviewer`, hooks `require_green_test.py`, `guard_subagent_write.py`, `resume_resultat.py`, `Test_Etape_2/README.md` |
 | 3. Historisation | `/etape-3` | À faire | skill `historiser-refacto`, `historisation_refacto/` |
 
 ## Livrables de l'étape 1 (référence Vibe 2.26.0, D-10)
@@ -17,11 +17,16 @@ Dernière mise à jour : 2026-10-09 (variante GLM 5.3, D-12 ; recette GLM à fai
 - `Test_Etape_1/` : `projet_exemple/tests/` recréé (4 tests + `conftest.py`) ; `preparer.sh` → 11 tests verts.
 - `README.md` et `Test_Etape_1/README.md` : venv avec pytest activé avant `vibe`, recette 2.26.0 (points 1-11, 7a bis, 7e, bonus).
 
+## Livrables de l'étape 2 (D-14)
+- `/refacto-test <fichier.robot>::<test> <consignes>` dans `orchestrator` : référence `results/refacto/avant`, plan par `ask_user_question`, `.refacto/courant.json`, `spawn`/`wait` de `rf-refactorer-<n>` (3 au plus), validation `results/refacto/apres` + `resume_resultat.py`, relecture unique `rf-reviewer-1`, fin `terminee` / `arretee`.
+- Hooks : `require-green-test` (`post_agent`), `guard-subagent-write` (`pre_tool`, strict) ; 50 tests pytest verts (Python 3.13 Windows, venv avec RF 7.1 ; fixtures `output.xml` générées par RF 7.1).
+- `AGENTS.md` : un nouvel essai après échec d'édition ; section Robot Framework. `config.toml` : allowlist bash = 44 défauts + `robot` + `resume_resultat.py`.
+
 ## Prochaine action
-1. Commit de D-11 et D-12 (avec accord).
-2. Facultatif : rejouer le point 4 pour vérifier les correctifs D-11 (relecture unique, pas de modification par le shell).
-3. Variante GLM 5.3 (D-12) appliquée le 2026-10-09 : `plan` et `orchestrator` sur `glm-5-3`, `thinking = "max"` (l'API reçoit `high`), `reviewer` hérité, compaction Small 4. Reste la recette ciblée GLM de `Test_Etape_1/README.md`. Point critique : au premier message, vérifier que l'API accepte `reasoning_effort = "high"` pour GLM ; sinon décider `thinking = "off"`.
-4. Puis `/etape-2` dans une session neuve.
+1. Commit des étapes 1 (D-11, D-12) et 2 (D-14), avec accord.
+2. Recette ciblée GLM (`Test_Etape_1/README.md`), puis recette étape 2 (`Test_Etape_2/README.md`) sur le dépôt cible.
+3. Reporter les points « À vérifier » (approbation dans un sous-agent, permission de `spawn`, `post_agent` d'un enfant, `tool_input` réel de `search_replace`, bash des sous-agents) dans `VIBE_FAITS_VERIFIES.md`.
+4. Puis `/etape-3` dans une session neuve.
 
 ## Recette du 2026-10-08 (Vibe 2.26.0, harnais avant correctifs)
 - OK : confiance, règles d'`AGENTS.md`, `/thinking` = high, `todo`, écriture par l'outil d'édition avec approbation dans `orchestrator`.
@@ -34,6 +39,5 @@ Dernière mise à jour : 2026-10-09 (variante GLM 5.3, D-12 ; recette GLM à fai
 - Hook depuis un sous-dossier : `workspace.cwd` = dossier de lancement ? si gênant, `git rev-parse --show-toplevel` (point 9).
 - Prompt de l'agent `plan` : `cli` ou variante `cli_2026-*` (GrowthBook) (point 6).
 - Bash dans le sous-agent `reviewer` (bonus).
-- Effet réel d'`allowed-tools` dans une skill (étape 2).
-- Bibliothèques RF du dépôt cible et existence d'une suite d'exemple (étape 2).
-- Nombre maximal d'itérations de refacto (étape 2).
+- Signatures Browser / Selenium / Requests des exemples `rf-conventions` : validées seulement contre des bibliothèques simulées (recette).
+- `robot` sans demande dans l'agent `plan` aussi : acceptable ? (exécute réellement le test).

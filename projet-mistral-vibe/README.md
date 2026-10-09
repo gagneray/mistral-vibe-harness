@@ -7,13 +7,20 @@ Harnais générique pour [Mistral Vibe](https://docs.mistral.ai/vibe/code) 2.26.
 | Élément | Rôle |
 | --- | --- |
 | `AGENTS.md` | Règles du projet, ajoutées au prompt système de chaque session : plan avant écriture, refus définitifs, preuve par exécution |
-| `.vibe/config.toml` | Agent de démarrage `plan`, modèle, modèle de compaction, permissions (denylist shell, fichiers du harnais sous `.vibe/` protégés en écriture) |
-| `.vibe/agents/orchestrator.toml` | Agent principal : planifie, fait valider, exécute, fait relire par `spawn` de `reviewer` |
+| `.vibe/config.toml` | Agent de démarrage `plan`, modèle, modèle de compaction, permissions (allowlist et denylist shell, fichiers du harnais sous `.vibe/` protégés en écriture) |
+| `.vibe/agents/orchestrator.toml` | Agent principal : planifie, fait valider, exécute, fait relire par `spawn` de `reviewer` ; mène les refactos RF |
 | `.vibe/agents/reviewer.toml` | Sous-agent de relecture, lecture seule (`read_file`, `bash`) |
-| `.vibe/prompts/*.md` | Prompts système : traduction française du prompt par défaut de Vibe (`vibe/core/prompts/cli.md` v2.26.0) + « Ajouts du harnais ». Si Vibe modifie `cli.md`, reprendre la traduction à la main |
-| `.vibe/hooks.toml`, `.vibe/hooks/audit_bash.py` | Trace chaque commande shell dans `.vibe/logs/bash.log` |
-| `.vibe/skills/` | Vide à ce stade |
-| `tests_harnais/` | Tests pytest des hooks |
+| `.vibe/agents/rf-refactorer.toml` | Sous-agent de refacto d'un test RF : n'écrit que des `.robot` / `.resource`, ne lance pas `robot` |
+| `.vibe/agents/rf-reviewer.toml` | Sous-agent de relecture d'une refacto RF, lecture seule ; remplace `reviewer` pendant une refacto |
+| `.vibe/prompts/*.md` | Prompts système : traduction française du prompt par défaut de Vibe (`vibe/core/prompts/cli.md` v2.26.0) + « Ajouts du harnais ». Si Vibe modifie `cli.md`, reprendre la traduction à la main dans les quatre fichiers |
+| `.vibe/hooks.toml` | Déclare les trois hooks ci-dessous |
+| `.vibe/hooks/audit_bash.py` | `post_tool` : trace chaque commande shell dans `.vibe/logs/bash.log` |
+| `.vibe/hooks/guard_subagent_write.py` | `pre_tool` strict : refuse à un sous-agent toute écriture hors `.robot` / `.resource` |
+| `.vibe/hooks/require_green_test.py` | `post_agent` : refuse la fin de tour tant que le test refactorisé n'est pas PASS et à jour |
+| `.vibe/hooks/resume_resultat.py` | Résumé court d'un `output.xml` (statut, keyword en échec, message), pour l'agent et le hook |
+| `.vibe/skills/refacto-test/` | Skill `/refacto-test` : déroulé de la refacto d'un test (commandes, messages de `spawn`) |
+| `.vibe/skills/rf-conventions/` | Conventions RF 7.1 et exemples, lues par l'orchestrateur et par les sous-agents RF |
+| `tests_harnais/` | Tests pytest des hooks (et leurs fixtures `output.xml`) |
 
 ## Fonctionnement
 
@@ -34,7 +41,7 @@ Garde-fous, du plus souple au plus strict :
 - **Permissions Vibe** (`config.toml`) :
   - commandes dangereuses refusées (`rm -rf`, `git push --force`, éditeurs interactifs) ;
   - fichiers du harnais protégés contre l'outil d'édition ;
-  - le reste du shell demande approbation, sauf les commandes de lecture autorisées par défaut (`git status`, `ls`…).
+  - le reste du shell demande approbation, sauf les commandes de lecture autorisées par défaut (`git status`, `ls`…), `robot` et `python3 .vibe/hooks/resume_resultat.py`.
 
   La denylist compare des préfixes : `git push origin x --force` passe ce filtre, mais reste soumis à approbation.
 - **Trace** : chaque commande shell est journalisée par le hook.
@@ -62,11 +69,16 @@ Clé : `MISTRAL_API_KEY` suffit (GLM 5.3 passe par le provider `mistral`), à co
 
 Ne pas utiliser `/thinking low` avec GLM : Vibe envoie alors `reasoning_effort = "none"`, que GLM refuse.
 
-pytest doit être disponible dans le shell qui lance `vibe` : sinon l'agent ne peut pas prouver ses changements. À la racine du dépôt, avant chaque session :
+pytest, Robot Framework 7.1 et les bibliothèques du dépôt doivent être disponibles dans le shell qui lance `vibe` : sinon l'agent ne peut pas prouver ses changements. À la racine du dépôt, une fois :
 
 ```bash
-python3 -m venv .venv && . .venv/bin/activate && pip install pytest
+python3 -m venv .venv && . .venv/bin/activate
+pip install pytest robotframework==7.1
+pip install <bibliothèques du dépôt>   # ex. robotframework-browser, robotframework-seleniumlibrary, robotframework-requests
+rfbrowser init                         # seulement avec Browser : installe ses navigateurs
 ```
+
+Puis, avant chaque session : `. .venv/bin/activate`.
 
 ## Repli vers Medium 3.5
 
@@ -96,11 +108,27 @@ Repli non retenu : `vibe --legacy-harness` rétablit l'ancien moteur (`task`, `e
 
 En mode non interactif (`-p`), passer toujours `--agent` et `--trust` ; `ask_user_question` y est désactivé.
 
-## Tests du hook
+## Refacto d'un test
+
+Dans l'agent `orchestrator`, depuis la racine du dépôt, venv activé :
+
+```text
+/refacto-test tests/panier.robot::Total Du Panier Avec Remise passer en syntaxe RF 7
+```
+
+Flux : exécution de référence (`results/refacto/avant`) → plan soumis par `ask_user_question` → `.refacto/courant.json` à `en_cours` → `rf-refactorer` (`spawn` / `wait`) → test rejoué (`results/refacto/apres`) → au premier test vert, relecture unique par `rf-reviewer` → nouvelle itération seulement sur un Bloquant accepté (3 itérations au plus) → `courant.json` à `terminee` ou `arretee` → conclusion.
+
+- Validation : `robot --test` réellement exécuté et PASS (pas de `--dryrun`), lu dans `output.xml` par `resume_resultat.py` (un SKIP rend aussi le code 0).
+- Garde-fous : `rf-refactorer` ne peut écrire que des `.robot` / `.resource` (hook `guard-subagent-write`) ; l'orchestrateur ne peut pas finir son tour sur un test non vert tant que la refacto est `en_cours` ou `terminee` (hook `require-green-test`).
+- Limite : un appel bash dure 300 s au plus. Un test plus long ne peut pas être validé par l'agent : il le signale et s'arrête.
+- Réinitialiser : supprimer `.refacto/` (et `results/refacto/` si besoin). Le hook ne contrôle plus rien sans `courant.json`.
+- Coût et durée d'une refacto : à relever par `/status` en fin de session (sous-agents sur le modèle de l'orchestrateur, GLM 5.3).
+
+## Tests des hooks
 
 ```bash
 . .venv/bin/activate
-python3 -m pytest tests_harnais -q
+python3 -m pytest tests_harnais -q   # 50 tests verts attendus
 ```
 
 ## Recette (à exécuter sous WSL)
@@ -124,5 +152,5 @@ Points 7a, 7b, 7d et 7e : préciser dans la demande « je teste les permissions,
 - [ ] 8. `.vibe/logs/bash.log` contient une ligne par commande, avec `file_system.bash` en 2e colonne ; `git status` ne l'affiche pas. Puis capturer le stdin brut d'un hook : ajouter temporairement à `.vibe/hooks.toml` un hook `post_tool`, `match = "bash"`, `command = "cat > /tmp/vibe_hook_stdin.json"`, relancer `vibe`, lancer une commande, et relever dans `/tmp/vibe_hook_stdin.json` `session_id`, `parent_session_id`, `transcript_path` (dossier ou fichier ?) et `duration_ms`. Retirer le hook ensuite.
 - [ ] 9. Lancer `vibe` depuis un sous-dossier du dépôt, exécuter une commande : échec probable du hook (`.vibe/hooks/audit_bash.py` introuvable depuis ce répertoire) ; noter le message affiché.
 - [ ] 10. `/compact` fonctionne (modèle de compaction Small 4).
-- [ ] 11. `python3 --version` (3.11) puis `python3 -m pytest tests_harnais -q` depuis la racine du harnais : 7 tests verts.
+- [ ] 11. `python3 --version` (3.11) puis `python3 -m pytest tests_harnais -q` depuis la racine du harnais : 50 tests verts (7 à l'étape 1).
 - [ ] Bonus. Dans le sous-agent `reviewer` : `git diff` et `grep -n` passent-ils sans question ? Une commande hors allowlist (ex. `touch x`) déclenche-t-elle une demande, un refus, ou passe-t-elle ?

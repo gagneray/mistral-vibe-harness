@@ -23,11 +23,25 @@ thinking = "off"
 # elles s'appliquent à file_system.bash et process.*, file_system.search_replace, file_system.write_file
 # (vibe/app_server/_unified_permissions.py).
 #
-# Shell : préfixes refusés sans demande.
-# Définir une liste remplace celle par défaut (fusion superficielle, vibe/core/tools/manager.py) :
-# la denylist reprend donc les défauts POSIX de bash.py ; pas d'allowlist (git status/diff/log y sont déjà).
+# Shell. Définir une liste remplace celle par défaut (fusion superficielle, vibe/core/tools/manager.py) :
+# chaque liste reprend donc les défauts POSIX de vibe/core/tools/builtins/bash.py.
+# allowlist (sans demande) : les 44 défauts, plus robot et le résumé d'output.xml (refacto RF).
+#   robot passe sans demande, dans tous les agents (plan compris) : il n'écrit que dans --outputdir
+#   (results/refacto/), mais exécute réellement le test contre l'environnement local.
+#   Délai d'un appel bash : 300 s au plus (plafond compilé), d'où un test de plus de 300 s non validable.
+# denylist (refus sans demande) : les 14 défauts, plus git push --force / -f, rm -rf / -fr.
 # Comparaison par préfixe : protection partielle (ex. "git push origin x --force" passe).
+# Les listes écrites dans le TOML d'un sous-agent sont perdues (vibe/app_server/_runtime.py) ; celles-ci,
+# de la session, s'appliquent aussi aux sous-agents (vibe/app_server/_unified_permissions.py, à confirmer en recette).
 [tools.bash]
+allowlist = [
+    "cd", "echo", "git diff", "git log", "git status", "tree", "whoami",
+    "basename", "cat", "comm", "cut", "date", "diff", "dirname", "du", "file", "find", "fmt", "fold",
+    "grep", "head", "join", "less", "ls", "md5sum", "more", "nl", "od", "paste", "pwd", "readlink",
+    "sha1sum", "sha256sum", "shasum", "sort", "stat", "sum", "tac", "tail", "tr", "uname", "uniq",
+    "wc", "which",
+    "robot", "python3 .vibe/hooks/resume_resultat.py",
+]
 denylist = ["gdb", "pdb", "passwd", "nano", "vim", "vi", "emacs", "bash -i", "sh -i", "zsh -i", "fish -i", "dash -i", "screen", "tmux", "git push --force", "git push -f", "rm -rf", "rm -fr"]
 
 # Le harnais (.vibe/) est protégé en écriture pour les agents, élément par élément :

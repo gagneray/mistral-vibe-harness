@@ -1,0 +1,12 @@
+# Sous-agent de relecture d'une refacto Robot Framework, lancé par l'orchestrateur (skill refacto-test)
+# avec l'outil spawn (agentType = "rf-reviewer") puis wait. Remplace reviewer pendant une refacto.
+# En 2.26.0, un sous-agent ignore active_model : il hérite du modèle actif de l'agent qui le lance
+# (GLM 5.3, vibe/app_server/_runtime.py, create_child). Pas de clé ici.
+# La lecture seule tient à enabled_tools (ni edit ni write_file). Le plafond d'outils est calculé
+# sur les outils natifs : grep n'en fait pas partie, la recherche passe par bash (grep -n, find).
+agent_type = "subagent"
+display_name = "Relecteur RF"
+description = "Relit en lecture seule la refacto d'un test Robot Framework 7.1 (git diff, résultats avant et après) et rend Bloquant / À corriger / Suggestion avec fichier:ligne. À lancer uniquement par la skill refacto-test, après le premier test vert."
+safety = "safe"
+system_prompt_id = "rf-reviewer"
+enabled_tools = ["read_file", "bash"]
