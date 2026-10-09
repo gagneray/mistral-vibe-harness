@@ -15,6 +15,30 @@ Harnais générique pour [Mistral Vibe](https://docs.mistral.ai/vibe/code) 2.26.
 | `.vibe/skills/` | Vide à ce stade |
 | `tests_harnais/` | Tests pytest des hooks |
 
+## Fonctionnement
+
+Le harnais impose un cycle : plan validé, exécution pas à pas, relecture, preuve par exécution des tests.
+
+```
+vibe ──► plan ──(plan validé, Shift+Tab)──► orchestrator ──spawn / wait──► reviewer
+         lit, propose                       todo, question,               relit, classe :
+         n'écrit rien                       édite, lance pytest           Bloquant / À corriger / Suggestion
+```
+
+1. `plan` (agent intégré de Vibe, au démarrage) lit le code et propose un plan. Il n'écrit rien, sauf son brouillon de session.
+2. `orchestrator` découpe le travail (`todo`), demande confirmation (`ask_user_question`), modifie les fichiers avec l'outil d'édition (chaque écriture est soumise à approbation) et lance réellement les tests.
+3. `reviewer` est lancé une fois par tâche. L'orchestrateur prend position sur chaque point. Les points « À corriger » et « Suggestion » ne sont appliqués qu'après accord ; une nouvelle relecture n'a lieu qu'après la correction d'un Bloquant.
+
+Garde-fous, du plus souple au plus strict :
+- **Consignes** (`AGENTS.md`, prompts) : suivies par le modèle, sans garantie.
+- **Permissions Vibe** (`config.toml`) :
+  - commandes dangereuses refusées (`rm -rf`, `git push --force`, éditeurs interactifs) ;
+  - fichiers du harnais protégés contre l'outil d'édition ;
+  - le reste du shell demande approbation, sauf les commandes de lecture autorisées par défaut (`git status`, `ls`…).
+
+  La denylist compare des préfixes : `git push origin x --force` passe ce filtre, mais reste soumis à approbation.
+- **Trace** : chaque commande shell est journalisée par le hook.
+
 Modèles (GLM 5.3, hébergé par Mistral, déclaré par `[[models]]` dans `.vibe/config.toml`) :
 
 | Agent | Modèle | Réflexion (`thinking`) |
